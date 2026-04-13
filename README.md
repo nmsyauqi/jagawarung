@@ -2,15 +2,17 @@
 
 A new Flutter project.
 
-## Getting Started
+Alur Kerja GitHub untuk 2 Developer (Git Flow Sederhana)
+Karena kalian hanya berdua, jangan gunakan alur Git yang terlalu rumit. Gunakan pendekatan Feature Branching:
 
-This project is a starting point for a Flutter application.
+Branch main / master: Ini adalah branch suci. Kodenya harus selalu bisa di-run (tidak error). Jangan pernah coding langsung di sini.
 
-A few resources to get you started if this is your first Flutter project:
+Branch dev (Opsional tapi disarankan): Tempat berkumpulnya fitur-fitur yang sudah selesai sebelum digabung ke main.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Branch Fitur (feature/nama-fitur): Saat kamu (Dev 1) atau temanmu (Dev 2) mau mengerjakan sesuatu, buat branch baru dari main.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Contoh Dev 1: git checkout -b feature/ui-login
+
+Contoh Dev 2: git checkout -b feature/logic-kasir
+
+Pull Request (PR) & Code Review: Jika Dev 1 sudah selesai, jangan langsung di-merge. Buat Pull Request di GitHub. Dev 2 wajib melihat kode Dev 1, lalu klik Approve jika sudah aman. Baru setelah itu di-merge ke branch utama. Ini memastikan kalian saling tahu apa yang dikerjakan satu sama lain.
