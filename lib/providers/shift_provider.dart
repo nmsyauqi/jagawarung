@@ -42,8 +42,10 @@ class ShiftProvider with ChangeNotifier {
 
   // 2. Fungsi Tambah Transaksi
   void tambahTransaksi(String idTransaksi, int nominal, {String? note}) {
-    if (!isShiftActive)
-      return; // Proteksi: Jangan bisa transaksi kalau shift belum buka
+    if (!isShiftActive) {
+      // Tambahkan kurung kurawal di sini
+      return;
+    }
 
     final transaksiBaru = TransaksiModel(
       idTransaksi: idTransaksi,
@@ -54,7 +56,7 @@ class ShiftProvider with ChangeNotifier {
     );
 
     _listTransaksi.add(transaksiBaru);
-    notifyListeners(); // Refresh UI (misal: update angka total uang masuk di layar)
+    notifyListeners();
   }
 
   // 3. Fungsi Tutup Shift

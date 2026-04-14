@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "971094507020",
+    "project_id": "jagawarung-f99af",
+    "storage_bucket": "jagawarung-f99af.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:971094507020:android:38823f65cfd1fb2efdb829",
+        "android_client_info": {
+          "package_name": "com.example.jagawarung"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtRRAiAiFPlwh5Y_hyByO6vgTxA8BMyro"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

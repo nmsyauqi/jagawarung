@@ -1,11 +1,18 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart'; // TAMBAHKAN INI
+import 'firebase_options.dart'; // TAMBAHKAN INI (File hasil generate flutterfire)
 import 'providers/shift_provider.dart';
 
-void main() {
+void main() async {
+  // Wajib ditambahkan agar sistem Flutter siap sebelum Firebase menyala
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Menyalakan mesin Firebase
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   runApp(
-    // Membungkus aplikasi dengan Provider
     MultiProvider(
       providers: [ChangeNotifierProvider(create: (_) => ShiftProvider())],
       child: const MyApp(),
