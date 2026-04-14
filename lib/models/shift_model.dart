@@ -35,7 +35,9 @@ class ShiftModel {
       idShift: map['id_shift'] ?? '',
       namaPegawai: map['nama_pegawai'] ?? '',
       waktuMulai: DateTime.parse(map['waktu_mulai']),
-      waktuSelesai: map['waktu_selesai'] != null ? DateTime.parse(map['waktu_selesai']) : null,
+      waktuSelesai: map['waktu_selesai'] != null
+          ? DateTime.parse(map['waktu_selesai'])
+          : null,
       saldoAwal: map['saldo_awal']?.toInt() ?? 0,
       saldoAkhir: map['saldo_akhir']?.toInt(),
     );
