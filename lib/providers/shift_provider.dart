@@ -2,20 +2,20 @@
 import 'package:flutter/material.dart';
 import '../models/shift_model.dart';
 import '../models/transaksi_model.dart';
+import '../services/database_service.dart';
 
 class ShiftProvider with ChangeNotifier {
   // --- STATE (Data yang disimpan di memori) ---
-  ShiftModel? _activeShift; // Jika null, berarti belum ada shift yang buka
+  ShiftModel? _activeShift; 
   List<TransaksiModel> _listTransaksi = [];
+  final DatabaseService _dbService = DatabaseService();
 
   // --- GETTER (Agar Dev 1 / UI bisa membaca data) ---
   ShiftModel? get activeShift => _activeShift;
   List<TransaksiModel> get listTransaksi => _listTransaksi;
 
-  // Mengecek apakah sedang ada shift yang berjalan? (Mengembalikan true/false)
   bool get isShiftActive => _activeShift != null;
 
-  // Menghitung total uang masuk selama shift ini
   int get totalUangMasuk {
     int total = 0;
     for (var tx in _listTransaksi) {
@@ -36,14 +36,13 @@ class ShiftProvider with ChangeNotifier {
     );
     // Kosongkan list transaksi setiap kali shift baru dimulai
     _listTransaksi = [];
-
-    notifyListeners(); // PENTING: Memberitahu UI untuk refresh layar!
+    _dbService.simpanShift(_activeShift!);
+    notifyListeners(); // refresh layar agar berubah ke halaman Kasir
   }
 
   // 2. Fungsi Tambah Transaksi
   void tambahTransaksi(String idTransaksi, int nominal, {String? note}) {
     if (!isShiftActive) {
-      // Tambahkan kurung kurawal di sini
       return;
     }
 
@@ -56,13 +55,13 @@ class ShiftProvider with ChangeNotifier {
     );
 
     _listTransaksi.add(transaksiBaru);
+    _dbService.simpanTransaksi(transaksiBaru);
     notifyListeners();
   }
 
   // 3. Fungsi Tutup Shift
   void tutupShift(int saldoAkhir) {
     if (_activeShift != null) {
-      // Update data shift dengan waktu selesai dan saldo akhir
       _activeShift = ShiftModel(
         idShift: _activeShift!.idShift,
         namaPegawai: _activeShift!.namaPegawai,
@@ -72,7 +71,7 @@ class ShiftProvider with ChangeNotifier {
         saldoAkhir: saldoAkhir,
       );
 
-      // TODO: Nanti di sini kita tambahkan logika untuk menyimpan data ke Database (Firebase/Local)
+      // wll tambahkan logika untuk menyimpan data ke Database (Firebase/Local)
 
       _activeShift = null; // Reset shift menjadi kosong kembali
       notifyListeners(); // Beritahu UI untuk kembali ke halaman Login/Buka Shift

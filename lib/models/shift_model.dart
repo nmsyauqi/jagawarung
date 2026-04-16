@@ -1,6 +1,7 @@
 // lib/models/shift_model.dart
 
 class ShiftModel {
+  final String idWarung;
   final String idShift;
   final String namaPegawai; // Untuk mencatat siapa yang jaga
   final DateTime waktuMulai;

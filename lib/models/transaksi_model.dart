@@ -1,6 +1,7 @@
 // lib/models/transaksi_model.dart
 
 class TransaksiModel {
+  final String idWarung;
   final String idTransaksi;
   final String idShift; // Foreign key, merujuk ke Shift yang sedang aktif
   final int nominal; // Wajib: Uang masuk
