@@ -10,6 +10,7 @@ class ShiftModel {
   final int? saldoAkhir; // Nullable (?) karena dihitung saat shift tutup
 
   ShiftModel({
+    required this.idWarung,
     required this.idShift,
     required this.namaPegawai,
     required this.waktuMulai,
@@ -21,6 +22,7 @@ class ShiftModel {
   // Fungsi untuk mengubah object menjadi Map (Berguna untuk simpan ke Database/Firebase)
   Map<String, dynamic> toMap() {
     return {
+      'id_warung': idWarung,
       'id_shift': idShift,
       'nama_pegawai': namaPegawai,
       'waktu_mulai': waktuMulai.toIso8601String(),
@@ -33,6 +35,7 @@ class ShiftModel {
   // Fungsi untuk mengubah Map dari Database menjadi Object Dart
   factory ShiftModel.fromMap(Map<String, dynamic> map) {
     return ShiftModel(
+      idWarung: map['id_warung'] ?? '',
       idShift: map['id_shift'] ?? '',
       namaPegawai: map['nama_pegawai'] ?? '',
       waktuMulai: DateTime.parse(map['waktu_mulai']),

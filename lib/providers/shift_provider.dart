@@ -27,8 +27,9 @@ class ShiftProvider with ChangeNotifier {
   // --- ACTIONS (Fungsi yang akan dipanggil saat tombol ditekan) ---
 
   // 1. Fungsi Buka Shift
-  void bukaShift(String idShift, String namaPegawai, int saldoAwal) {
+  void bukaShift(String idWarung, String idShift, String namaPegawai, int saldoAwal) {
     _activeShift = ShiftModel(
+      idWarung: idWarung,
       idShift: idShift,
       namaPegawai: namaPegawai,
       waktuMulai: DateTime.now(),
@@ -47,6 +48,7 @@ class ShiftProvider with ChangeNotifier {
     }
 
     final transaksiBaru = TransaksiModel(
+      idWarung: _activeShift!.idWarung,
       idTransaksi: idTransaksi,
       idShift: _activeShift!.idShift,
       nominal: nominal,
@@ -63,6 +65,7 @@ class ShiftProvider with ChangeNotifier {
   void tutupShift(int saldoAkhir) {
     if (_activeShift != null) {
       _activeShift = ShiftModel(
+        idWarung: _activeShift!.idWarung,
         idShift: _activeShift!.idShift,
         namaPegawai: _activeShift!.namaPegawai,
         waktuMulai: _activeShift!.waktuMulai,

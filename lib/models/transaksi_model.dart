@@ -9,6 +9,7 @@ class TransaksiModel {
   final DateTime waktuTransaksi;
 
   TransaksiModel({
+    required this.idWarung,
     required this.idTransaksi,
     required this.idShift,
     required this.nominal,
@@ -18,6 +19,7 @@ class TransaksiModel {
 
   Map<String, dynamic> toMap() {
     return {
+      'id_warung': idWarung,
       'id_transaksi': idTransaksi,
       'id_shift': idShift,
       'nominal': nominal,
@@ -28,6 +30,7 @@ class TransaksiModel {
 
   factory TransaksiModel.fromMap(Map<String, dynamic> map) {
     return TransaksiModel(
+      idWarung: map['id_warung'] ?? '',
       idTransaksi: map['id_transaksi'] ?? '',
       idShift: map['id_shift'] ?? '',
       nominal: map['nominal']?.toInt() ?? 0,
