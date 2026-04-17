@@ -2,10 +2,10 @@
 
 class UserModel {
   final String idUser;
-  final String idWarung; // Wajib: Untuk membedakan data antar warung
+  final String idWarung; // Sebagai referensi warung tempat user ini bekerja/memiliki
   final String nama;
-  final String role; // "owner" atau "pegawai"
-  final String pin; // Passcode untuk login
+  final String role; // Isinya hanya: "owner" atau "pegawai"
+  final String pin; // Passcode 4-6 digit untuk login
 
   UserModel({
     required this.idUser,

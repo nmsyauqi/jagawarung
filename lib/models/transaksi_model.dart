@@ -1,17 +1,17 @@
 // lib/models/transaksi_model.dart
 
 class TransaksiModel {
-  final String idWarung;
   final String idTransaksi;
-  final String idShift; // Foreign key, merujuk ke Shift yang sedang aktif
-  final int nominal; // Wajib: Uang masuk
-  final String? note; // Opsional: Catatan transaksi janggal/besar
+  final String idShift;
+  final String idWarung; // Agar gampang dihitung pendapatan per cabang
+  final int nominal;
+  final String? note;
   final DateTime waktuTransaksi;
 
   TransaksiModel({
-    required this.idWarung,
     required this.idTransaksi,
     required this.idShift,
+    required this.idWarung,
     required this.nominal,
     this.note,
     required this.waktuTransaksi,
@@ -19,9 +19,9 @@ class TransaksiModel {
 
   Map<String, dynamic> toMap() {
     return {
-      'id_warung': idWarung,
       'id_transaksi': idTransaksi,
       'id_shift': idShift,
+      'id_warung': idWarung,
       'nominal': nominal,
       'note': note,
       'waktu_transaksi': waktuTransaksi.toIso8601String(),
@@ -30,9 +30,9 @@ class TransaksiModel {
 
   factory TransaksiModel.fromMap(Map<String, dynamic> map) {
     return TransaksiModel(
-      idWarung: map['id_warung'] ?? '',
       idTransaksi: map['id_transaksi'] ?? '',
       idShift: map['id_shift'] ?? '',
+      idWarung: map['id_warung'] ?? '',
       nominal: map['nominal']?.toInt() ?? 0,
       note: map['note'],
       waktuTransaksi: DateTime.parse(map['waktu_transaksi']),

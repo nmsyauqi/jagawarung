@@ -1,49 +1,57 @@
 // lib/models/shift_model.dart
 
 class ShiftModel {
-  final String idWarung;
   final String idShift;
-  final String namaPegawai; // Untuk mencatat siapa yang jaga
+  final String idWarung; // Agar Owner gampang filter dashboard per cabang
+  final String idUser; // KOREKSI: Fleksibel, bisa ID pegawai atau ID owner yang lagi jaga
+  final String namaPengguna; // Disimpan agar UI tidak perlu query lagi cari nama user
   final DateTime waktuMulai;
-  final DateTime? waktuSelesai; // Nullable (?) karena diisi saat shift berakhir
+  final DateTime? waktuSelesai;
   final int saldoAwal;
-  final int? saldoAkhir; // Nullable (?) karena dihitung saat shift tutup
+  final int? saldoAkhir;
+  final int? totalUangMasuk; // Diisi pas tutup shift untuk grafik Owner
+  final int? totalTransaksi; // Berapa kali tombol kalkulator diklik
 
   ShiftModel({
-    required this.idWarung,
     required this.idShift,
-    required this.namaPegawai,
+    required this.idWarung,
+    required this.idUser,
+    required this.namaPengguna,
     required this.waktuMulai,
     this.waktuSelesai,
     required this.saldoAwal,
     this.saldoAkhir,
+    this.totalUangMasuk,
+    this.totalTransaksi,
   });
 
-  // Fungsi untuk mengubah object menjadi Map (Berguna untuk simpan ke Database/Firebase)
   Map<String, dynamic> toMap() {
     return {
-      'id_warung': idWarung,
       'id_shift': idShift,
-      'nama_pegawai': namaPegawai,
+      'id_warung': idWarung,
+      'id_user': idUser,
+      'nama_pengguna': namaPengguna,
       'waktu_mulai': waktuMulai.toIso8601String(),
       'waktu_selesai': waktuSelesai?.toIso8601String(),
       'saldo_awal': saldoAwal,
       'saldo_akhir': saldoAkhir,
+      'total_uang_masuk': totalUangMasuk,
+      'total_transaksi': totalTransaksi,
     };
   }
 
-  // Fungsi untuk mengubah Map dari Database menjadi Object Dart
   factory ShiftModel.fromMap(Map<String, dynamic> map) {
     return ShiftModel(
-      idWarung: map['id_warung'] ?? '',
       idShift: map['id_shift'] ?? '',
-      namaPegawai: map['nama_pegawai'] ?? '',
+      idWarung: map['id_warung'] ?? '',
+      idUser: map['id_user'] ?? '',
+      namaPengguna: map['nama_pengguna'] ?? '',
       waktuMulai: DateTime.parse(map['waktu_mulai']),
-      waktuSelesai: map['waktu_selesai'] != null
-          ? DateTime.parse(map['waktu_selesai'])
-          : null,
+      waktuSelesai: map['waktu_selesai'] != null ? DateTime.parse(map['waktu_selesai']) : null,
       saldoAwal: map['saldo_awal']?.toInt() ?? 0,
       saldoAkhir: map['saldo_akhir']?.toInt(),
+      totalUangMasuk: map['total_uang_masuk']?.toInt(),
+      totalTransaksi: map['total_transaksi']?.toInt(),
     );
   }
 }
