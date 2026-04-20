@@ -26,7 +26,7 @@ class _ShiftSwapPageState extends State<ShiftSwapPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Swap your shift on:', style: TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
+            const Text('Swap your shift on:', style: TextStyle(fontSize: 14, color: AppTheme.textMuted)),
             const SizedBox(height: 4),
             const Text('Monday, 16th (08:00 AM - 04:00 PM)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 32),
@@ -35,8 +35,8 @@ class _ShiftSwapPageState extends State<ShiftSwapPage> {
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
-                color: AppTheme.surfaceWhite,
-                border: Border.all(color: AppTheme.borderGrey),
+                color: AppTheme.surface,
+                border: Border.all(color: AppTheme.border),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: DropdownButtonHideUnderline(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../theme.dart';
-import '../data_dummy.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../utils/app_theme.dart';
+import 'login_page.dart';
 
 class OwnerDashboard extends StatefulWidget {
   const OwnerDashboard({super.key});
@@ -15,155 +16,283 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.bg,
       appBar: AppBar(
-        title: const Text('Store Manager', style: TextStyle(color: Colors.white)),
-        backgroundColor: AppTheme.primaryDark,
-        elevation: 0,
+        centerTitle: false,
+        titleSpacing: 24,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Manajemen Toko', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
+            Text('Akses Pemilik', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textMuted)),
+          ],
+        ),
         actions: [
-          IconButton(icon: const Icon(Icons.notifications_none_rounded, color: Colors.white), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.logout_rounded, color: AppTheme.danger),
+            tooltip: 'Keluar',
+            onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginPage())),
+          ),
           const SizedBox(width: 8),
         ],
       ),
-      body: _buildBody(),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (i) => setState(() => _currentIndex = i),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Overview'),
-          BottomNavigationBarItem(icon: Icon(Icons.people_alt_rounded), label: 'Employees'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_month_rounded), label: 'Shifts'),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          _buildStatistikTab(),
+          _buildRekapTab(),
+          _buildPegawaiTab(),
         ],
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: AppTheme.shadowLg,
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (i) => setState(() => _currentIndex = i),
+          selectedItemColor: AppTheme.primary,
+          unselectedItemColor: AppTheme.textMuted,
+          backgroundColor: AppTheme.surface,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.bar_chart_rounded), label: 'Statistik'),
+            BottomNavigationBarItem(icon: Icon(Icons.summarize_rounded), label: 'Rekap Shift'),
+            BottomNavigationBarItem(icon: Icon(Icons.people_alt_rounded), label: 'Pegawai'),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildBody() {
+  // ── TAB 1: STATISTIK & TRANSAKSI ──
+  Widget _buildStatistikTab() {
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       children: [
-        Text('Overview', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(child: _buildSummaryCard('Total\nEmployees', '24', Icons.people_outline_rounded, AppTheme.primary)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildSummaryCard('Active\nShifts', '8', Icons.access_time_rounded, AppTheme.primary)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildSummaryCard('Pending\nRequests', '3', Icons.mark_email_unread_outlined, AppTheme.primaryDark)),
-          ],
-        ),
-        const SizedBox(height: 32),
-
-        Text('Management', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 16),
-        _buildMenuCard('Manage Employees', Icons.badge_outlined),
-        const SizedBox(height: 12),
-        _buildMenuCard('Manage Shifts', Icons.calendar_today_outlined),
-        const SizedBox(height: 12),
-        _buildMenuCard('Approvals', Icons.fact_check_outlined, badgeCount: 3),
-        const SizedBox(height: 12),
-        _buildMenuCard('Reports', Icons.bar_chart_rounded),
-        
-        const SizedBox(height: 32),
-        Text('Today\'s Attendance', style: Theme.of(context).textTheme.titleLarge),
+        Text('Statistik Keuangan Hari Ini', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
         const SizedBox(height: 16),
         Container(
+          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: AppTheme.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.border),
+            gradient: const LinearGradient(colors: [AppTheme.primary, AppTheme.primarySoft]),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: AppTheme.shadowMd,
           ),
           child: Column(
-            children: MockData.todayAttendance.map((a) {
-              final user = MockData.employees.firstWhere((e) => e.id == a.employeeId);
-              return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Total Uang Masuk', style: GoogleFonts.inter(fontSize: 14, color: Colors.white70)),
+              const SizedBox(height: 8),
+              Text('Rp 4.250.000', style: GoogleFonts.plusJakartaSans(fontSize: 32, fontWeight: FontWeight.w800, color: Colors.white)),
+              const SizedBox(height: 24),
+              Row(
                 children: [
-                  ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: AppTheme.surfaceDim,
-                      child: Text(user.name[0], style: const TextStyle(color: AppTheme.textDark, fontWeight: FontWeight.bold)),
-                    ),
-                    title: Text(user.name, style: const TextStyle(fontWeight: FontWeight.w500)),
-                    subtitle: Text('Check-in: ${a.time}'),
-                    trailing: _buildStatusBadge(a.status),
-                  ),
-                  if (a != MockData.todayAttendance.last)
-                    const Divider(height: 1, indent: 72),
+                  Expanded(child: _miniStat('Transaksi', '42x')),
+                  Container(width: 1, height: 30, color: Colors.white24),
+                  Expanded(child: _miniStat('Shift Berjalan', '2')),
                 ],
-              );
-            }).toList(),
+              ),
+            ],
           ),
         ),
+        const SizedBox(height: 32),
+        Text('Transaksi Terkini Berjalan', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
+        const SizedBox(height: 16),
+        _txCard('Pembelian Sembako B3', 'Rp 150.000', '14:20', 'Andi'),
+        _txCard('Tanpa catatan', 'Rp 20.000', '13:45', 'Siti'),
+        _txCard('Borongan air galon', 'Rp 450.000', '11:10', 'Budi'),
       ],
     );
   }
 
-  Widget _buildSummaryCard(String title, String count, IconData icon, Color color) {
+  Widget _miniStat(String label, String val) {
+    return Column(
+      children: [
+        Text(val, style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.accentLight)),
+        Text(label, style: GoogleFonts.inter(fontSize: 12, color: Colors.white70)),
+      ],
+    );
+  }
+
+  Widget _txCard(String note, String amount, String time, String kasir) {
     return Container(
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppTheme.border),
-        boxShadow: AppTheme.subtleShadow,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 16),
-          Text(count, style: Theme.of(context).textTheme.headlineLarge),
-          const SizedBox(height: 4),
-          Text(title, style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11)),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: AppTheme.surfaceDim, borderRadius: BorderRadius.circular(12)),
+            child: const Icon(Icons.receipt_long_rounded, color: AppTheme.textBody),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(note, style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
+                const SizedBox(height: 4),
+                Text('Kasir: $kasir  •  $time', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textMuted)),
+              ],
+            ),
+          ),
+          Text(amount, style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.accent)),
         ],
       ),
     );
   }
 
-  Widget _buildMenuCard(String title, IconData icon, {int badgeCount = 0}) {
-    return Material(
-      color: AppTheme.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: const BorderSide(color: AppTheme.border),
+  // ── TAB 2: REKAP SHIFT & EKSPOR ──
+  Widget _buildRekapTab() {
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Rekap Shift', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
+            ElevatedButton.icon(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Laporan PDF berhasil diunduh.')));
+              },
+              icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
+              label: const Text('Ekspor PDF'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.surface,
+                foregroundColor: AppTheme.danger,
+                elevation: 0,
+                side: const BorderSide(color: AppTheme.border),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        _rekapPeriodeCard('Minggu Ini', 'Rp 14.200.000', 12),
+        const SizedBox(height: 16),
+        _rekapPeriodeCard('Bulan Ini (Oktober)', 'Rp 58.750.000', 48),
+      ],
+    );
+  }
+
+  Widget _rekapPeriodeCard(String title, String amount, int shifts) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppTheme.shadowSm,
+        border: Border.all(color: AppTheme.border),
       ),
-      child: InkWell(
-        onTap: () {},
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textBody)),
+          const SizedBox(height: 8),
+          Text(amount, style: GoogleFonts.plusJakartaSans(fontSize: 28, fontWeight: FontWeight.w800, color: AppTheme.primary)),
+          const Divider(height: 24),
+          Row(
             children: [
-              Icon(icon, color: AppTheme.textDark),
-              const SizedBox(width: 16),
-              Expanded(child: Text(title, style: Theme.of(context).textTheme.titleMedium)),
-              if (badgeCount > 0)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(color: AppTheme.absent, borderRadius: BorderRadius.circular(12)),
-                  child: Text(badgeCount.toString(), style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                ),
+              const Icon(Icons.check_circle_rounded, size: 16, color: AppTheme.success),
+              const SizedBox(width: 8),
+              Text('$shifts Shift berhasil ditutup (0 Selisih)', style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textMuted)),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildStatusBadge(String status) {
-    Color bg, text;
-    if (status == 'Present') {
-      bg = AppTheme.presentLight; text = AppTheme.present;
-    } else if (status == 'Absent') {
-      bg = AppTheme.absentLight; text = AppTheme.absent;
-    } else {
-      bg = AppTheme.lateLight; text = AppTheme.lateStatus;
-    }
+  // ── TAB 3: DATA PEGAWAI ──
+  Widget _buildPegawaiTab() {
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Manajemen Pegawai', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
+            IconButton(
+              onPressed: _showTambahPegawaiDialog,
+              icon: const Icon(Icons.person_add_alt_1_rounded, color: AppTheme.primary),
+              style: IconButton.styleFrom(backgroundColor: AppTheme.surfaceDim),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _pegawaiCard('Aditya', 'Kasir Utama', 'P1-902'),
+        _pegawaiCard('Siti Rahma', 'Pramuniaga', 'P2-114'),
+        _pegawaiCard('Budi Santoso', 'Kasir', 'P3-887'),
+      ],
+    );
+  }
 
+  Widget _pegawaiCard(String name, String role, String empId) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(16)),
-      child: Text(status, style: TextStyle(color: text, fontSize: 12, fontWeight: FontWeight.w600)),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.border),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: AppTheme.primarySoft,
+            child: Text(name[0], style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
+                Text('$role  •  ID: $empId', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textMuted)),
+              ],
+            ),
+          ),
+          OutlinedButton(
+            onPressed: () {},
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              minimumSize: const Size(0, 36),
+            ),
+            child: const Text('Ubah PIN', style: TextStyle(fontSize: 12)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showTambahPegawaiDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        title: Text('Registrasi Pegawai', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(decoration: const InputDecoration(labelText: 'Nama Lengkap')),
+            const SizedBox(height: 16),
+            TextField(
+              decoration: const InputDecoration(labelText: 'Buat PIN Akses (6 Angka)', helperText: 'PIN digunakan pegawai untuk login absen'),
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx), child: const Text('Simpan')),
+        ],
+      ),
     );
   }
 }

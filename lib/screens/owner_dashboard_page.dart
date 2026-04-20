@@ -22,7 +22,7 @@ class OwnerDashboardPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          const Text('Overview', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+          const Text('Overview', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -34,7 +34,7 @@ class OwnerDashboardPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 32),
-          const Text('Management', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+          const Text('Management', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
           const SizedBox(height: 16),
           Card(
             child: Column(
@@ -61,11 +61,11 @@ class OwnerDashboardPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: AppTheme.primaryBlue, size: 24),
+            Icon(icon, color: AppTheme.primary, size: 24),
             const SizedBox(height: 12),
-            Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+            Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
             const SizedBox(height: 4),
-            Text(title, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+            Text(title, style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
           ],
         ),
       ),
@@ -74,9 +74,9 @@ class OwnerDashboardPage extends StatelessWidget {
 
   Widget _buildMenuItem(BuildContext context, String title, IconData icon, {Widget? trailing}) {
     return ListTile(
-      leading: Icon(icon, color: AppTheme.textPrimary),
+      leading: Icon(icon, color: AppTheme.textDark),
       title: Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-      trailing: trailing ?? const Icon(Icons.chevron_right, color: AppTheme.textSecondary),
+      trailing: trailing ?? const Icon(Icons.chevron_right, color: AppTheme.textMuted),
       onTap: () {
         // Navigate
       },
@@ -87,7 +87,7 @@ class OwnerDashboardPage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppTheme.errorRed,
+        color: AppTheme.danger,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(text, style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.bold)),

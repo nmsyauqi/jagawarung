@@ -29,7 +29,8 @@ class _BukaShiftPageState extends State<BukaShiftPage> {
     super.dispose();
   }
 
-  String _angkaMentah() => _controller.text.replaceAll('.', '').replaceAll(',', '');
+  String _angkaMentah() =>
+      _controller.text.replaceAll('.', '').replaceAll(',', '');
 
   Future<void> _mulaiShift() async {
     if (!_formKey.currentState!.validate()) return;
@@ -48,7 +49,9 @@ class _BukaShiftPageState extends State<BukaShiftPage> {
     );
     context.read<ShiftProvider>().bukaShift(shift);
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const DashboardPage()));
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const DashboardPage()));
   }
 
   @override
@@ -62,16 +65,34 @@ class _BukaShiftPageState extends State<BukaShiftPage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text('Buka Shift Baru'),
+        centerTitle: false,
+        titleSpacing: 24, // Geser rapi selaras dengan padding body
+        title: Text(
+          'Buka Shift Baru',
+          style: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            color: AppTheme.textDark,
+          ),
+        ),
         actions: [
           TextButton.icon(
             onPressed: () {
               // AppState.logout(); // FIXME: Ganti dengan AuthProvider
 
-              Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const LoginPage()));
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const LoginPage()),
+              );
             },
-            icon: const Icon(Icons.logout_rounded, size: 18, color: AppTheme.textMuted),
-            label: Text('Keluar', style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textMuted)),
+            icon: const Icon(
+              Icons.logout_rounded,
+              size: 18,
+              color: AppTheme.textMuted,
+            ),
+            label: Text(
+              'Keluar',
+              style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textMuted),
+            ),
           ),
           const SizedBox(width: 8),
         ],
@@ -93,24 +114,63 @@ class _BukaShiftPageState extends State<BukaShiftPage> {
                   CircleAvatar(
                     radius: 24,
                     backgroundColor: AppTheme.accent,
-                    child: Text(inisial, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
+                    child: Text(
+                      inisial,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Selamat datang,', style: GoogleFonts.inter(fontSize: 12, color: Colors.white54)),
-                        Text(namaPegawai, style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
-                        Text(isPemilik ? 'Pemilik Toko' : 'Kasir', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.accentLight)),
+                        Text(
+                          'Selamat datang,',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: Colors.white54,
+                          ),
+                        ),
+                        Text(
+                          namaPegawai,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          isPemilik ? 'Pemilik Toko' : 'Kasir',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: AppTheme.accentLight,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(DateFormat('HH:mm').format(skrg), style: GoogleFonts.plusJakartaSans(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white)),
-                      Text(DateFormat('d MMM yyyy').format(skrg), style: GoogleFonts.inter(fontSize: 11, color: Colors.white54)),
+                      Text(
+                        DateFormat('HH:mm').format(skrg),
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        DateFormat('d MMM yyyy').format(skrg),
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          color: Colors.white54,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -128,12 +188,20 @@ class _BukaShiftPageState extends State<BukaShiftPage> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.info_outline_rounded, color: AppTheme.accent, size: 18),
+                  Icon(
+                    Icons.info_outline_rounded,
+                    color: AppTheme.accent,
+                    size: 18,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'Hitung uang fisik di kasir sebelum memulai shift. Nilai ini akan menjadi acuan audit saldo di akhir shift.',
-                      style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textBody, height: 1.5),
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: AppTheme.textBody,
+                        height: 1.5,
+                      ),
                     ),
                   ),
                 ],
@@ -152,33 +220,57 @@ class _BukaShiftPageState extends State<BukaShiftPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Saldo Awal Kasir', style: Theme.of(context).textTheme.headlineSmall),
+                  Text(
+                    'Saldo Awal Kasir',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
                   const SizedBox(height: 4),
-                  Text('Masukkan jumlah uang tunai (Rupiah)', style: Theme.of(context).textTheme.bodySmall),
+                  Text(
+                    'Masukkan jumlah uang tunai (Rupiah)',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                   const SizedBox(height: 20),
                   TextFormField(
                     controller: _controller,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    style: GoogleFonts.plusJakartaSans(fontSize: 28, fontWeight: FontWeight.w700, color: AppTheme.textDark),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textDark,
+                    ),
                     decoration: InputDecoration(
                       prefixText: 'Rp  ',
-                      prefixStyle: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.textMuted),
+                      prefixStyle: GoogleFonts.inter(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textMuted,
+                      ),
                       hintText: '0',
-                      hintStyle: GoogleFonts.plusJakartaSans(fontSize: 28, fontWeight: FontWeight.w700, color: AppTheme.border),
+                      hintStyle: GoogleFonts.plusJakartaSans(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.border,
+                      ),
                     ),
                     onChanged: (val) {
                       final raw = val.replaceAll('.', '');
                       final n = int.tryParse(raw);
                       if (n != null) {
                         final fmt = NumberFormat('#,###', 'id_ID').format(n);
-                        _controller.value = TextEditingValue(text: fmt, selection: TextSelection.collapsed(offset: fmt.length));
+                        _controller.value = TextEditingValue(
+                          text: fmt,
+                          selection: TextSelection.collapsed(
+                            offset: fmt.length,
+                          ),
+                        );
                       }
                     },
                     validator: (val) {
                       final raw = _angkaMentah();
                       if (raw.isEmpty) return 'Saldo awal wajib diisi';
-                      if ((double.tryParse(raw) ?? 0) <= 0) return 'Saldo harus lebih dari Rp 0';
+                      if ((double.tryParse(raw) ?? 0) <= 0)
+                        return 'Saldo harus lebih dari Rp 0';
                       return null;
                     },
                   ),
@@ -193,13 +285,26 @@ class _BukaShiftPageState extends State<BukaShiftPage> {
               child: ElevatedButton(
                 onPressed: _loading ? null : _mulaiShift,
                 child: _loading
-                    ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
+                      )
                     : Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Icon(Icons.play_arrow_rounded, size: 22),
                           const SizedBox(width: 8),
-                          Text('Mulai Shift', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600)),
+                          Text(
+                            'Mulai Shift',
+                            style: GoogleFonts.inter(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ],
                       ),
               ),

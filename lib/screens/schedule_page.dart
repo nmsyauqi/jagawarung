@@ -21,7 +21,7 @@ class SchedulePage extends StatelessWidget {
             child: Card(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
-                side: BorderSide(color: isToday ? AppTheme.primaryBlue : AppTheme.borderGrey, width: isToday ? 2 : 1),
+                side: BorderSide(color: isToday ? AppTheme.primary : AppTheme.border, width: isToday ? 2 : 1),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -32,14 +32,14 @@ class SchedulePage extends StatelessWidget {
                     Container(
                       width: 50,
                       decoration: BoxDecoration(
-                        color: AppTheme.backgroundLight,
+                        color: AppTheme.surfaceDim,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Column(
                         children: [
-                          Text('MON', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
-                          Text('${15 + index}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue)),
+                          Text('MON', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textMuted)),
+                          Text('${15 + index}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primary)),
                         ],
                       ),
                     ),
@@ -51,7 +51,7 @@ class SchedulePage extends StatelessWidget {
                         children: [
                           const Text('Morning Shift', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 4),
-                          const Text('08:00 AM - 04:00 PM', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                          const Text('08:00 AM - 04:00 PM', style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
                           const SizedBox(height: 8),
                           if (!isToday) 
                             OutlinedButton(

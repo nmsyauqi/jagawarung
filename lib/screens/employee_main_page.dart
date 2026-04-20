@@ -27,9 +27,9 @@ class _EmployeeMainPageState extends State<EmployeeMainPage> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
-        selectedItemColor: AppTheme.primaryBlue,
-        unselectedItemColor: AppTheme.textSecondary,
-        backgroundColor: AppTheme.surfaceWhite,
+        selectedItemColor: AppTheme.primary,
+        unselectedItemColor: AppTheme.textMuted,
+        backgroundColor: AppTheme.surface,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.calendar_today_outlined), label: 'Schedule'),

@@ -4,7 +4,11 @@ import 'screens/login_page.dart';
 import 'package:provider/provider.dart';
 import 'providers/shift_provider.dart';
 
-void main() {
+import 'package:intl/date_symbol_data_local.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('id_ID', null);
   runApp(const MyApp());
 }
 

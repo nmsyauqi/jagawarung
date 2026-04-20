@@ -17,7 +17,7 @@ class AttendancePage extends StatelessWidget {
         itemBuilder: (context, index) {
           final isLate = index == 2;
           return Container(
-            color: AppTheme.surfaceWhite,
+            color: AppTheme.surface,
             child: ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               title: Text('Monday, ${15 - index}th Oct', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
@@ -25,11 +25,11 @@ class AttendancePage extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 8.0),
                 child: Row(
                   children: [
-                    const Icon(Icons.login, size: 14, color: AppTheme.textSecondary),
+                    const Icon(Icons.login, size: 14, color: AppTheme.textMuted),
                     const SizedBox(width: 4),
                     Text(isLate ? '08:15 AM' : '07:55 AM', style: const TextStyle(fontSize: 12)),
                     const SizedBox(width: 16),
-                    const Icon(Icons.logout, size: 14, color: AppTheme.textSecondary),
+                    const Icon(Icons.logout, size: 14, color: AppTheme.textMuted),
                     const SizedBox(width: 4),
                     const Text('04:05 PM', style: TextStyle(fontSize: 12)),
                   ],
@@ -41,7 +41,7 @@ class AttendancePage extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: isLate ? AppTheme.warningOrange.withOpacity(0.1) : AppTheme.secondaryGreen.withOpacity(0.1),
+                      color: isLate ? AppTheme.warning.withOpacity(0.1) : AppTheme.success.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -49,7 +49,7 @@ class AttendancePage extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: isLate ? AppTheme.warningOrange : AppTheme.secondaryGreen,
+                        color: isLate ? AppTheme.warning : AppTheme.success,
                       ),
                     ),
                   ),

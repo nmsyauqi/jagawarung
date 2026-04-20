@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import '../utils/app_theme.dart';
 import 'package:provider/provider.dart';
+import '../utils/app_theme.dart';
 import '../providers/shift_provider.dart';
 import '../models/transaksi.dart';
 
-/// Halaman tambah transaksi uang masuk ke kasir.
 class TambahTransaksiPage extends StatefulWidget {
   const TambahTransaksiPage({super.key});
 
@@ -16,161 +15,297 @@ class TambahTransaksiPage extends StatefulWidget {
 }
 
 class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
-  final _nominalCtrl = TextEditingController();
+  String _nominal = '';
   final _catatanCtrl = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
+  final _desktopNominalCtrl = TextEditingController(); // Khusus form input Desktop
   bool _loading = false;
+  bool _showNotes = false;
+  
+  // Riwayat transaksi khusus selama membuka halaman ini
+  final List<Transaksi> _riwayatSesiIni = [];
 
   @override
   void dispose() {
-    _nominalCtrl.dispose();
+    _desktopNominalCtrl.dispose();
     _catatanCtrl.dispose();
     super.dispose();
   }
 
-  String _raw() => _nominalCtrl.text.replaceAll('.', '').replaceAll(',', '');
+  void _pressKey(String val) {
+    setState(() {
+      if (val == 'del') {
+        if (_nominal.isNotEmpty) _nominal = _nominal.substring(0, _nominal.length - 1);
+      } else if (val == '000') {
+        if (_nominal.isNotEmpty && _nominal.length <= 10) _nominal += '000';
+      } else {
+        if (_nominal.length <= 12) _nominal += val;
+      }
+    });
+  }
+
+  String get _formattedNominal {
+    if (_nominal.isEmpty) return '0';
+    final n = int.tryParse(_nominal) ?? 0;
+    return NumberFormat('#,###', 'id_ID').format(n);
+  }
 
   Future<void> _simpan() async {
-    if (!_formKey.currentState!.validate()) return;
-    final nominal = double.tryParse(_raw()) ?? 0;
-    if (nominal <= 0) return;
+    final tPlatform = Theme.of(context).platform;
+    final isDesktop = tPlatform == TargetPlatform.windows || tPlatform == TargetPlatform.macOS || tPlatform == TargetPlatform.linux || MediaQuery.of(context).size.width > 600;
+    
+    // Ambil nominal dari Numpad (Mobile) atau Textfield (Desktop)
+    final valStr = isDesktop ? _desktopNominalCtrl.text.replaceAll('.', '') : _nominal;
+    if (valStr.isEmpty) return;
+    
+    final val = double.tryParse(valStr) ?? 0;
+    if (val <= 0) return;
 
     setState(() => _loading = true);
-    await Future.delayed(const Duration(milliseconds: 350));
+    await Future.delayed(const Duration(milliseconds: 200));
 
     final trx = Transaksi(
       id: 'tx_${DateTime.now().millisecondsSinceEpoch}',
       shiftId: context.read<ShiftProvider>().shiftAktif!.id,
-      nominal: nominal,
+      nominal: val,
       catatan: _catatanCtrl.text.trim().isEmpty ? null : _catatanCtrl.text.trim(),
       waktu: DateTime.now(),
     );
     context.read<ShiftProvider>().tambahTransaksi(trx);
+    
     if (!mounted) return;
+    
+    // Simpan ke riwayat sesi ini agar kasir bisa lihat, lalu reset input
+    setState(() {
+      _riwayatSesiIni.insert(0, trx); // Masukkan di urutan teratas
+      _nominal = '';
+      _desktopNominalCtrl.clear();
+      _catatanCtrl.clear();
+      _showNotes = false;
+      _loading = false;
+    });
+    
+    // Auto Hilangkan System Keyboard setelah klik Simpan!
+    FocusManager.instance.primaryFocus?.unfocus();
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Transaksi tersimpan!'), duration: Duration(seconds: 1), behavior: SnackBarBehavior.floating),
+    );
+    
+    // Otomatis kembali ke halaman utama (Dashboard) setelah sukses tersimpan
     Navigator.of(context).pop(true);
   }
 
   @override
   Widget build(BuildContext context) {
+    final tPlatform = Theme.of(context).platform;
+    final isDesktop = tPlatform == TargetPlatform.windows || tPlatform == TargetPlatform.macOS || tPlatform == TargetPlatform.linux || MediaQuery.of(context).size.width > 600;
+    final keyboardTerbuka = MediaQuery.of(context).viewInsets.bottom > 0;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Tambah Transaksi')),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            // ── Input Nominal ──
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppTheme.surface,
-                borderRadius: BorderRadius.circular(AppTheme.r16),
-                boxShadow: AppTheme.shadowMd,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Jumlah Uang Masuk', style: Theme.of(context).textTheme.headlineSmall),
-                  const SizedBox(height: 4),
-                  Text('Masukkan nominal uang yang diterima kasir', style: Theme.of(context).textTheme.bodySmall),
-                  const SizedBox(height: 20),
-                  TextFormField(
-                    controller: _nominalCtrl,
-                    keyboardType: TextInputType.number,
-                    autofocus: true,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    style: GoogleFonts.plusJakartaSans(fontSize: 32, fontWeight: FontWeight.w700, color: AppTheme.accent),
-                    decoration: InputDecoration(
-                      prefixText: 'Rp  ',
-                      prefixStyle: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.textMuted),
-                      hintText: '0',
-                      hintStyle: GoogleFonts.plusJakartaSans(fontSize: 32, fontWeight: FontWeight.w700, color: AppTheme.border),
+      backgroundColor: AppTheme.bg,
+      appBar: AppBar(
+        title: const Text('Catat Transaksi'),
+        backgroundColor: AppTheme.bg,
+      ),
+      body: Column(
+        children: [
+          // ── Display Nominal & Riwayat Sesi ──
+          Expanded(
+            child: SingleChildScrollView( // Kunci anti-overflow (Garis kuning)
+              reverse: true,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                alignment: Alignment.bottomRight,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                     // List Riwayat Input (Scrollable)
+                     if (_riwayatSesiIni.isNotEmpty)
+                       ListView.builder(
+                         shrinkWrap: true,
+                         physics: const NeverScrollableScrollPhysics(),
+                         reverse: true, // Item terbaru di bawah
+                         itemCount: _riwayatSesiIni.length,
+                         itemBuilder: (ctx, i) {
+                           final t = _riwayatSesiIni[i];
+                           return Padding(
+                             padding: const EdgeInsets.only(bottom: 12),
+                             child: Row(
+                               mainAxisAlignment: MainAxisAlignment.end,
+                               children: [
+                                 Text(t.catatan ?? 'Input', style: GoogleFonts.inter(fontSize: 14, color: AppTheme.textMuted)),
+                                 const SizedBox(width: 16),
+                                 Text('+ ${NumberFormat('#,###', 'id_ID').format(t.nominal)}', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.textBody)),
+                                 const SizedBox(width: 8),
+                                 const Icon(Icons.check_circle_rounded, color: AppTheme.success, size: 16),
+                               ],
+                             ),
+                           );
+                         },
+                       )
+                     else
+                       const SizedBox(height: 100),
+                       
+                    const Divider(),
+                    const SizedBox(height: 8),
+                  
+                  // Input Utama (Responsive: TextField jika Desktop, Custom Text jika Mobile)
+                  if (isDesktop)
+                    TextField(
+                      controller: _desktopNominalCtrl,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      autofocus: true,
+                      textAlign: TextAlign.right,
+                      style: GoogleFonts.plusJakartaSans(fontSize: 48, fontWeight: FontWeight.w800, color: AppTheme.textDark),
+                      decoration: InputDecoration(
+                        prefixText: 'Rp  ',
+                        prefixStyle: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w600, color: AppTheme.textMuted),
+                        hintText: '0',
+                        hintStyle: GoogleFonts.plusJakartaSans(fontSize: 48, fontWeight: FontWeight.w800, color: AppTheme.border),
+                        border: InputBorder.none,
+                      ),
+                      onChanged: (val) {
+                        final raw = val.replaceAll('.', '');
+                        final n = int.tryParse(raw);
+                        if (n != null) {
+                          final fmt = NumberFormat('#,###', 'id_ID').format(n);
+                          _desktopNominalCtrl.value = TextEditingValue(text: fmt, selection: TextSelection.collapsed(offset: fmt.length));
+                        }
+                      },
+                    )
+                  else
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text('Rp ', style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w600, color: AppTheme.textMuted)),
+                        Text(_formattedNominal, style: GoogleFonts.plusJakartaSans(fontSize: 48, fontWeight: FontWeight.w800, color: AppTheme.textDark)),
+                      ],
                     ),
-                    onChanged: (val) {
-                      final raw = val.replaceAll('.', '');
-                      final n = int.tryParse(raw);
-                      if (n != null) {
-                        final fmt = NumberFormat('#,###', 'id_ID').format(n);
-                        _nominalCtrl.value = TextEditingValue(text: fmt, selection: TextSelection.collapsed(offset: fmt.length));
-                      }
-                    },
-                    validator: (v) {
-                      if (_raw().isEmpty) return 'Nominal wajib diisi';
-                      if ((double.tryParse(_raw()) ?? 0) <= 0) return 'Nominal harus lebih dari Rp 0';
-                      return null;
-                    },
+                    
+                  const SizedBox(height: 12),
+                  if (_showNotes)
+                    TextField(
+                      controller: _catatanCtrl,
+                      autofocus: true,
+                      style: GoogleFonts.inter(fontSize: 15),
+                      decoration: InputDecoration(
+                        hintText: 'Tambahkan catatan opsional...',
+                        fillColor: Colors.white,
+                        filled: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[300]!)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.primary)),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.close_rounded, size: 20),
+                          onPressed: () {
+                            _catatanCtrl.clear();
+                            setState(() => _showNotes = false);
+                            FocusManager.instance.primaryFocus?.unfocus(); // Auto hide keyboard saat disilang
+                          },
+                        ),
+                      ),
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) {
+                        FocusManager.instance.primaryFocus?.unfocus();
+                        if (_nominal.isNotEmpty) _simpan(); // Bisa lgsg simpan bila pencet tombol Done/Enter di keyboard
+                      },
+                    )
+                  else
+                    InkWell(
+                      onTap: () => setState(() => _showNotes = true),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: AppTheme.border),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.edit_note_rounded, size: 16, color: AppTheme.accent),
+                            const SizedBox(width: 6),
+                            Text('Catatan', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.accent)),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          )),
+          
+          // ── Numpad UI ──
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, -4))],
+            ),
+            child: SafeArea(
+              child: Column(
+                children: [
+                   // Sembunyikan Grid Angka di Layar Desktop (Laptop) atau saat System Keyboard terbuka
+                  if (!keyboardTerbuka && !isDesktop) ...[
+                    Row(children: [_btn('1'), _btn('2'), _btn('3')]),
+                    Row(children: [_btn('4'), _btn('5'), _btn('6')]),
+                    Row(children: [_btn('7'), _btn('8'), _btn('9')]),
+                    Row(children: [_btn('000'), _btn('0'), _btn('del')]),
+                    const SizedBox(height: 16),
+                  ],
+                  // Blok Tombol Simpan
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: ((isDesktop ? _desktopNominalCtrl.text.isEmpty : _nominal.isEmpty) || _loading) ? null : _simpan,
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      ),
+                      child: _loading 
+                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.check_circle_outline_rounded, size: 24),
+                              const SizedBox(width: 8),
+                              Text('Simpan Transaksi', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w700)),
+                            ],
+                          ),
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+          ),
+        ],
+      ),
+    );
+  }
 
-            // ── Catatan Opsional ──
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppTheme.surface,
-                borderRadius: BorderRadius.circular(AppTheme.r16),
-                boxShadow: AppTheme.shadowMd,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text('Catatan', style: Theme.of(context).textTheme.headlineSmall),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(color: AppTheme.surfaceDim, borderRadius: BorderRadius.circular(6)),
-                        child: Text('Opsional', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w500, color: AppTheme.textMuted)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text('Keterangan singkat untuk transaksi ini', style: Theme.of(context).textTheme.bodySmall),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _catatanCtrl,
-                    maxLines: 3,
-                    maxLength: 200,
-                    style: GoogleFonts.inter(fontSize: 14),
-                    decoration: const InputDecoration(
-                      hintText: 'Contoh: Penjualan pagi, bayar listrik, dll.',
-                      counterText: '',
-                    ),
-                  ),
-                ],
-              ),
+  Widget _btn(String label) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.all(6.0),
+        child: Material(
+          color: AppTheme.bg,
+          borderRadius: BorderRadius.circular(20),
+          child: InkWell(
+            onTap: () => _pressKey(label),
+            borderRadius: BorderRadius.circular(20),
+            highlightColor: Colors.black.withOpacity(0.05),
+            child: Container(
+              height: 58, // Lebih normal sizenya
+              alignment: Alignment.center,
+              child: label == 'del'
+                  ? const Icon(Icons.backspace_rounded, color: AppTheme.danger, size: 24)
+                  : Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
             ),
-            const SizedBox(height: 28),
-
-            // ── Tombol Simpan ──
-            SizedBox(
-              height: 54,
-              child: ElevatedButton(
-                onPressed: _loading ? null : _simpan,
-                child: _loading
-                    ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.check_rounded, size: 20),
-                          const SizedBox(width: 8),
-                          Text('Simpan Transaksi', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600)),
-                        ],
-                      ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 54,
-              child: OutlinedButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: Text('Batal', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600)),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
