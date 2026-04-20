@@ -40,7 +40,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// WrapperScreen: Penjaga Rute Otomatis
+// WrapperScreen: Penjaga Rute & Papan Kendali Demo
 class WrapperScreen extends StatelessWidget {
   const WrapperScreen({super.key});
 
@@ -49,52 +49,153 @@ class WrapperScreen extends StatelessWidget {
     final authProvider = context.watch<AuthProvider>();
     final shiftProvider = context.watch<ShiftProvider>();
 
-    // 1. Cek apakah ada yang login?
+    // ---------------------------------------------------------
+    // 1. STATE: BELUM LOGIN (Gerbang Utama)
+    // ---------------------------------------------------------
     if (!authProvider.isAuth) {
-      // Ini adalah UI Pengujian Sementara
       return Scaffold(
+        appBar: AppBar(title: const Text('JagaWarung - Mode Demo')),
         body: Center(
-          child: ElevatedButton(
-            onPressed: () async {
-              // Menembak fungsi login di Provider menggunakan data statis
-              // PASTIKAN data ini benar-benar ada di koleksi 'users' di Firestore-mu!
-              bool sukses = await context.read<AuthProvider>().login("warung_berkah", "1234");
-              if (sukses) {
-                debugPrint("LOGIN BERHASIL! YAY!"); 
-              } else {
-                debugPrint("LOGIN GAGAL! CEK PIN ATAU ID");
-              }
-            },
-            child: const Text('Tes Login (Klik Aku)'),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('Silakan masuk menggunakan data di Firebase'),
+              const SizedBox(height: 20),
+              
+              ElevatedButton(
+                // Tombol ini menyimulasikan kasir/owner mengetik ID dan PIN di UI
+                onPressed: () => context.read<AuthProvider>().login("warung_berkah", "0000"),
+                child: const Text('Login Demo (Warung Berkah, PIN 0000)'),
+              ),
+              ElevatedButton(
+                onPressed: () => context.read<AuthProvider>().login("warung_berkah", "1234"),
+                child: const Text('Login Demo (Warung Berkah, PIN 1234)'),
+              ),
+            ],
           ),
         ),
       );
     }
 
-    // 2. Jika yang login adalah Owner
+    // ---------------------------------------------------------
+    // 2. STATE: LOGIN SEBAGAI OWNER
+    // ---------------------------------------------------------
     if (authProvider.isOwner) {
-      return const Scaffold(
-        body: Center(child: Text('Dashboard Analytics Owner')),
-      ); // Ganti dengan DashboardOwnerScreen nanti
+      return Scaffold(
+        appBar: AppBar(title: const Text('Dashboard Owner')),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Selamat Datang, Bos ${authProvider.currentUser?.nama}!',
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                onPressed: () => context.read<AuthProvider>().logout(),
+                child: const Text('Logout Owner', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
-    // 3. Jika yang login adalah Pegawai
+    // ---------------------------------------------------------
+    // 3. STATE: LOGIN SEBAGAI PEGAWAI (Atau Owner yang jadi Kasir)
+    // ---------------------------------------------------------
     if (authProvider.isPegawai) {
-      // Cek apakah pegawai sudah buka shift?
-      if (shiftProvider.isShiftActive) {
-        return const Scaffold(
-          body: Center(child: Text('Mode Kasir Aktif (Kalkulator)')),
-        ); // Ganti dengan HomeCashierScreen nanti
-      } else {
-        return const Scaffold(
-          body: Center(child: Text('Halaman Mulai Shift (Input Saldo)')),
-        ); // Ganti dengan ShiftStartScreen nanti
+      final user = authProvider.currentUser!; // Ambil data user yang sedang login
+
+      // 3A. PEGAWAI BELUM BUKA SHIFT
+      if (!shiftProvider.isShiftActive) {
+        return Scaffold(
+          appBar: AppBar(title: Text('Halo, ${user.nama}')),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('Anda belum membuka shift hari ini.'),
+                const SizedBox(height: 20),
+                
+                ElevatedButton(
+                  onPressed: () {
+                    // Memicu Buka Shift Dummy dengan saldo laci 50.000
+                    context.read<ShiftProvider>().bukaShift(
+                      idShift: "SHIFT-${DateTime.now().millisecondsSinceEpoch}", 
+                      idWarung: user.idWarung, 
+                      idUser: user.idUser, 
+                      namaPengguna: user.nama, 
+                      saldoAwal: 50000,
+                    );
+                  },
+                  child: const Text('Buka Shift (Modal Laci Rp 50.000)'),
+                ),
+                
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: () => context.read<AuthProvider>().logout(),
+                  child: const Text('Logout'),
+                ),
+              ],
+            ),
+          ),
+        );
+      } 
+      
+      // 3B. PEGAWAI SEDANG SHIFT (MODE KASIR AKTIF)
+      else {
+        return Scaffold(
+          appBar: AppBar(title: const Text('Mesin Kasir Aktif')),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Uang Masuk: Rp ${shiftProvider.totalUangMasuk}', 
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)
+                ),
+                Text('Jumlah Transaksi: ${shiftProvider.listTransaksi.length} kali'),
+                const SizedBox(height: 30),
+                
+                // Tombol Input Transaksi Dummy
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                  onPressed: () {
+                    // Memasukkan uang 15.000 ke dalam transaksi
+                    context.read<ShiftProvider>().tambahTransaksi(
+                      "TX-${DateTime.now().millisecondsSinceEpoch}", 
+                      15000, 
+                      note: "Dummy Uang Masuk",
+                    );
+                  },
+                  child: const Text('Input Rp 15.000 (Klik Berkali-kali)', style: TextStyle(color: Colors.white)),
+                ),
+                
+                const SizedBox(height: 30),
+
+                // Tombol Tutup Shift
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                  onPressed: () {
+                    // Saldo akhir simulasi: Saldo Awal (50rb) + Uang Masuk
+                    int saldoAkhirFisik = 50000 + shiftProvider.totalUangMasuk;
+                    context.read<ShiftProvider>().tutupShift(saldoAkhirFisik);
+                  },
+                  child: const Text('Tutup Shift Warung', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            ),
+          ),
+        );
       }
     }
 
-    // Fallback jika terjadi error
-    return const Scaffold(
-      body: Center(child: Text('Error: Role tidak dikenali')),
-    );
+    // ---------------------------------------------------------
+    // 4. FALLBACK ERROR
+    // ---------------------------------------------------------
+    return const Scaffold(body: Center(child: Text('Error: Role tidak dikenali')));
   }
 }
