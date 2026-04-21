@@ -1,3 +1,4 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -9,7 +10,7 @@ import 'theme.dart';
 import 'screens/login_page.dart';
 import 'screens/owner_dashboard.dart';
 import 'screens/buka_shift_page.dart';
-import 'screens/dashboard_page.dart';
+import 'screens/dashboard_page.dart'; // Asumsi ini adalah layar mesin kasir
 
 // Import Provider Backend
 import 'providers/shift_provider.dart';
@@ -43,12 +44,12 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'JagaWarung',
       theme: AppTheme.theme,
-      home: const WrapperScreen(),
+      home: const WrapperScreen(), // Seluruh rute dikendalikan dari sini
     );
   }
 }
 
-// WrapperScreen: Penjaga Rute (Backend Logic + Modern UI)
+// WrapperScreen: Penjaga Rute Otomatis (Pure Logic, No UI)
 class WrapperScreen extends StatelessWidget {
   const WrapperScreen({super.key});
 
@@ -57,9 +58,9 @@ class WrapperScreen extends StatelessWidget {
     final authProvider = context.watch<AuthProvider>();
     final shiftProvider = context.watch<ShiftProvider>();
 
-    // 1. STATE: BELUM LOGIN (Gerbang Utama)
+    // 1. STATE: BELUM LOGIN
     if (!authProvider.isAuth) {
-      return const LoginPage();
+      return const LoginPage(); 
     }
 
     // 2. STATE: LOGIN SEBAGAI OWNER
@@ -69,91 +70,19 @@ class WrapperScreen extends StatelessWidget {
 
     // 3. STATE: LOGIN SEBAGAI PEGAWAI
     if (authProvider.isPegawai) {
-      final user = authProvider.currentUser!;
+      
       // 3A. PEGAWAI BELUM BUKA SHIFT
       if (!shiftProvider.isShiftActive) {
-        return Scaffold(
-          appBar: AppBar(title: Text('Halo, ${user.nama}')),
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('Anda belum membuka shift hari ini.'),
-                const SizedBox(height: 20),
-                
-                ElevatedButton(
-                  onPressed: () {
-                    // Memicu Buka Shift Dummy dengan saldo laci 50.000
-                    context.read<ShiftProvider>().bukaShift(
-                      idShift: "SHIFT-${DateTime.now().millisecondsSinceEpoch}", 
-                      idWarung: user.idWarung, 
-                      idUser: user.idUser, 
-                      namaPengguna: user.nama, 
-                      saldoAwal: 50000,
-                    );
-                  },
-                  child: const Text('Buka Shift (Modal Laci Rp 50.000)'),
-                ),
-                
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () => context.read<AuthProvider>().logout(),
-                  child: const Text('Logout'),
-                ),
-              ],
-            ),
-          ),
-        );
+        return const BukaShiftPage(); // Langsung arahkan ke UI Frontend
       } 
+      
       // 3B. PEGAWAI SEDANG SHIFT (MODE KASIR AKTIF)
       else {
-        return Scaffold(
-          appBar: AppBar(title: const Text('Mesin Kasir Aktif')),
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Uang Masuk: Rp ${shiftProvider.totalUangMasuk}', 
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)
-                ),
-                Text('Jumlah Transaksi: ${shiftProvider.listTransaksi.length} kali'),
-                const SizedBox(height: 30),
-                
-                // Tombol Input Transaksi Dummy
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                  onPressed: () {
-                    // Memasukkan uang 15.000 ke dalam transaksi
-                    context.read<ShiftProvider>().tambahTransaksi(
-                      "TX-${DateTime.now().millisecondsSinceEpoch}", 
-                      15000, 
-                      note: "Dummy Uang Masuk",
-                    );
-                  },
-                  child: const Text('Input Rp 15.000 (Klik Berkali-kali)', style: TextStyle(color: Colors.white)),
-                ),
-                
-                const SizedBox(height: 30),
-
-                // Tombol Tutup Shift
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-                  onPressed: () {
-                    // Saldo akhir simulasi: Saldo Awal (50rb) + Uang Masuk
-                    int saldoAkhirFisik = 50000 + shiftProvider.totalUangMasuk;
-                    context.read<ShiftProvider>().tutupShift(saldoAkhirFisik);
-                  },
-                  child: const Text('Tutup Shift Warung', style: TextStyle(color: Colors.white)),
-                ),
-              ],
-            ),
-          ),
-        );
+        // Ganti 'DashboardPage()' dengan nama class UI Kasir/Numpad yang benar dari FE
+        return const DashboardPage(); 
       }
     }
 
-    // ---------------------------------------------------------
     // 4. FALLBACK ERROR
     return const Scaffold(body: Center(child: Text('Error: Role tidak dikenali')));
   }

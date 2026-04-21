@@ -2,15 +2,15 @@
 
 class ShiftModel {
   final String idShift;
-  final String idWarung; // Agar Owner gampang filter dashboard per cabang
-  final String idUser; // KOREKSI: Fleksibel, bisa ID pegawai atau ID owner yang lagi jaga
-  final String namaPengguna; // Disimpan agar UI tidak perlu query lagi cari nama user
+  final String idWarung; 
+  final String idUser; 
+  final String namaPengguna; 
   final DateTime waktuMulai;
   final DateTime? waktuSelesai;
   final int saldoAwal;
   final int? saldoAkhir;
-  final int? totalUangMasuk; // Diisi pas tutup shift untuk grafik Owner
-  final int? totalTransaksi; // Berapa kali tombol kalkulator diklik
+  final int? totalUangMasuk; 
+  final int? totalTransaksi; 
 
   ShiftModel({
     required this.idShift,
@@ -24,6 +24,16 @@ class ShiftModel {
     this.totalUangMasuk,
     this.totalTransaksi,
   });
+
+  // ---> Rumus Selisih Kas Otomatis <---
+  int get selisihKas {
+    if (saldoAkhir == null) return 0; // Jika shift belum ditutup, selisih 0
+    int uangSeharusnyaDiLaci = saldoAwal + (totalUangMasuk ?? 0);
+    return saldoAkhir! - uangSeharusnyaDiLaci; 
+    // Hasil Minus = Uang Kurang/Hilang
+    // Hasil Plus = Uang Berlebih
+    // Hasil 0 = Balance / Pas
+  }
 
   Map<String, dynamic> toMap() {
     return {
