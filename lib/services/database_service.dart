@@ -102,14 +102,12 @@ class DatabaseService {
   // --- PIPELINE DATA REAL-TIME UNTUK DASHBOARD ---
 
   Stream<QuerySnapshot> streamTransaksiHariIni(String idWarung) {
-    // SOLUSI DASHBOARD KOSONG: Menghapus orderBy sementara agar tidak terkena error Index Firestore
     return _db.collection('transaksis')
         .where('id_warung', isEqualTo: idWarung)
         .snapshots();
   }
 
   Stream<QuerySnapshot> streamRekapShift(String idWarung) {
-    // Menghapus orderBy sementara
     return _db.collection('shifts')
         .where('id_warung', isEqualTo: idWarung)
         .snapshots();
@@ -120,5 +118,16 @@ class DatabaseService {
         .where('id_warung', isEqualTo: idWarung)
         .where('role', isEqualTo: 'pegawai')
         .snapshots();
+  }
+
+  // ---> TAMBAHAN BARU: Ambil Nama Warung <---
+  Future<String> getNamaWarung(String idWarung) async {
+    try {
+      var doc = await _db.collection('warungs').doc(idWarung).get();
+      if (doc.exists) return doc.data()?['nama_warung'] ?? 'Warung Tidak Diketahui';
+      return 'Warung Tidak Diketahui';
+    } catch (e) {
+      return 'Error Memuat Data';
+    }
   }
 }

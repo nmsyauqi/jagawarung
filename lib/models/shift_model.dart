@@ -27,12 +27,20 @@ class ShiftModel {
 
   // ---> Rumus Selisih Kas Otomatis <---
   int get selisihKas {
-    if (saldoAkhir == null) return 0; // Jika shift belum ditutup, selisih 0
+    if (saldoAkhir == null) return 0; 
     int uangSeharusnyaDiLaci = saldoAwal + (totalUangMasuk ?? 0);
     return saldoAkhir! - uangSeharusnyaDiLaci; 
-    // Hasil Minus = Uang Kurang/Hilang
-    // Hasil Plus = Uang Berlebih
-    // Hasil 0 = Balance / Pas
+  }
+
+  // ---> TAMBAHAN BARU: Rumus Durasi Shift Otomatis <---
+  String get durasi {
+    if (waktuSelesai == null) return "Sedang Berjalan";
+    final selisihWaktu = waktuSelesai!.difference(waktuMulai);
+    final jam = selisihWaktu.inHours;
+    final menit = selisihWaktu.inMinutes.remainder(60);
+    
+    if (jam == 0) return "$menit Menit";
+    return "$jam Jam $menit Menit";
   }
 
   Map<String, dynamic> toMap() {
