@@ -117,12 +117,11 @@ class WrapperScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('Anda belum membuka shift hari ini.'),
+                const Text('Selamat Datang dan Selamat Memulai Shift.'),
                 const SizedBox(height: 20),
                 
                 ElevatedButton(
                   onPressed: () {
-                    // Memicu Buka Shift Dummy dengan saldo laci 50.000
                     context.read<ShiftProvider>().bukaShift(
                       idShift: "SHIFT-${DateTime.now().millisecondsSinceEpoch}", 
                       idWarung: user.idWarung, 
@@ -172,6 +171,17 @@ class WrapperScreen extends StatelessWidget {
                     );
                   },
                   child: const Text('Input Rp 15.000 (Klik Berkali-kali)', style: TextStyle(color: Colors.white)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                  onPressed: () {
+                    context.read<ShiftProvider>().tambahTransaksi(
+                      "TX-${DateTime.now().millisecondsSinceEpoch}", 
+                      10000, 
+                      note: "Dummy Uang Masuk",
+                    );
+                  },
+                  child: const Text('Input Rp 10.000 (Klik Berkali-kali)', style: TextStyle(color: Colors.white)),
                 ),
                 
                 const SizedBox(height: 30),
