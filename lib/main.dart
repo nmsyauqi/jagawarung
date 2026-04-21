@@ -69,6 +69,7 @@ class WrapperScreen extends StatelessWidget {
 
     // 3. STATE: LOGIN SEBAGAI PEGAWAI
     if (authProvider.isPegawai) {
+      final user = authProvider.currentUser!;
       // 3A. PEGAWAI BELUM BUKA SHIFT
       if (!shiftProvider.isShiftActive) {
         return Scaffold(
