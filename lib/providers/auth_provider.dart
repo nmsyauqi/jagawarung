@@ -39,4 +39,18 @@ class AuthProvider with ChangeNotifier {
     _currentUser = null;
     notifyListeners(); 
   }
+
+  // --- Fungsi Tambahan: Update State Profil ---
+  void perbaruiProfilLokal(String namaBaru, String pinBaru) {
+    if (_currentUser != null) {
+      _currentUser = UserModel(
+        idUser: _currentUser!.idUser,
+        idWarung: _currentUser!.idWarung,
+        role: _currentUser!.role,
+        nama: namaBaru,
+        pin: pinBaru,
+      );
+      notifyListeners();
+    }
+  }
 }

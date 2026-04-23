@@ -97,8 +97,8 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
       const SnackBar(content: Text('Transaksi tersimpan!'), duration: Duration(seconds: 1), behavior: SnackBarBehavior.floating),
     );
     
-    // Otomatis kembali ke halaman utama (Dashboard) setelah sukses tersimpan
-    Navigator.of(context).pop(true);
+    // Kita TIDAK LAGI melakukan Navigator.pop() di sini!
+    // Layar akan menetap agar hasil riwayat tampil bergulir ke atas seperti kalkulator pita kasir.
   }
 
   @override

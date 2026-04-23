@@ -99,6 +99,16 @@ class DatabaseService {
     }
   }
 
+  Future<bool> hapusPegawai(String idUser) async {
+    try {
+      await _db.collection('users').doc(idUser).delete();
+      return true;
+    } catch (e) {
+      debugPrint("❌ Error hapus pegawai: $e");
+      return false;
+    }
+  }
+
   // --- PIPELINE DATA REAL-TIME UNTUK DASHBOARD ---
 
   Stream<QuerySnapshot> streamTransaksiHariIni(String idWarung) {
@@ -128,6 +138,19 @@ class DatabaseService {
       return 'Warung Tidak Diketahui';
     } catch (e) {
       return 'Error Memuat Data';
+    }
+  }
+
+  Future<bool> updateProfilToko(String idWarung, String idOwner, String namaWarungBaru, String namaOwnerBaru, String pinBaru) async {
+    try {
+      await Future.wait([
+        _db.collection('warungs').doc(idWarung).update({'nama_warung': namaWarungBaru}),
+        _db.collection('users').doc(idOwner).update({'nama': namaOwnerBaru, 'pin': pinBaru}),
+      ]);
+      return true;
+    } catch (e) {
+      debugPrint("❌ Error update profil: $e");
+      return false;
     }
   }
 }

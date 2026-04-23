@@ -343,6 +343,11 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             icon: const Icon(Icons.edit_note_rounded, color: AppTheme.primary),
             onPressed: () => _showUbahPinDialog(user.idUser, user.nama),
           ),
+          IconButton(
+            tooltip: 'Hapus Pegawai',
+            icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger),
+            onPressed: () => _showHapusPegawaiDialog(user),
+          ),
         ],
       ),
     );
@@ -360,7 +365,19 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           children: [
             const Center(child: Icon(Icons.storefront_rounded, size: 80, color: AppTheme.primarySoft)),
             const SizedBox(height: 20),
-            Center(child: Text('Identitas Toko', style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.bold))),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('Identitas Toko', style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.bold)),
+                const SizedBox(width: 12),
+                IconButton(
+                  onPressed: () => _showUbahProfilToko(owner, namaWarung),
+                  icon: const Icon(Icons.edit_rounded, color: AppTheme.primary),
+                  tooltip: 'Ubah Profil',
+                  style: IconButton.styleFrom(backgroundColor: AppTheme.primarySoft.withValues(alpha: 0.1)),
+                ),
+              ],
+            ),
             const SizedBox(height: 40),
             _infoRow(Icons.store, 'Nama Warung', namaWarung),
             const Divider(height: 32),
@@ -417,6 +434,39 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     );
   }
 
+  void _showHapusPegawaiDialog(UserModel user) {
+    bool loading = false;
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return AlertDialog(
+            title: const Text('Pecat / Hapus Pegawai'),
+            content: Text('Apakah Anda yakin ingin menghapus ${user.nama} dari daftar kasir? Akses loginnya akan mandek permanen.'),
+            actions: [
+              TextButton(onPressed: loading ? null : () => Navigator.pop(ctx), child: const Text('Batal')),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
+                onPressed: loading ? null : () async {
+                  setModalState(() => loading = true);
+                  bool sukses = await _dbService.hapusPegawai(user.idUser);
+                  if (sukses && mounted) {
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Akses Pegawai dikunci & dihapus')));
+                  } else {
+                    setModalState(() => loading = false);
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal menghapus')));
+                  }
+                }, 
+                child: loading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text('Ya, Hapus', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          );
+        }
+      ),
+    );
+  }
+
   void _showTambahPegawaiDialog(String idWarung) {
     final namaCtrl = TextEditingController();
     final pinCtrl = TextEditingController();
@@ -443,6 +493,58 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             }
           }, child: const Text('Simpan')),
         ],
+      ),
+    );
+  }
+
+  void _showUbahProfilToko(UserModel owner, String namaWarungLama) {
+    final namaWarungCtrl = TextEditingController(text: namaWarungLama);
+    final namaOwnerCtrl = TextEditingController(text: owner.nama);
+    final pinCtrl = TextEditingController(text: owner.pin);
+    bool loading = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return AlertDialog(
+            title: const Text('Ubah Identitas'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(controller: namaWarungCtrl, decoration: const InputDecoration(labelText: 'Nama Warung')),
+                  const SizedBox(height: 12),
+                  TextField(controller: namaOwnerCtrl, decoration: const InputDecoration(labelText: 'Nama Bos / Pemilik')),
+                  const SizedBox(height: 12),
+                  TextField(controller: pinCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'PIN Akses Bos'), maxLength: 6),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: loading ? null : () => Navigator.pop(ctx), child: const Text('Batal')),
+              ElevatedButton(
+                onPressed: loading ? null : () async {
+                  if (namaWarungCtrl.text.isEmpty || namaOwnerCtrl.text.isEmpty || pinCtrl.text.isEmpty) return;
+                  setModalState(() => loading = true);
+                  
+                  bool sukses = await _dbService.updateProfilToko(owner.idWarung, owner.idUser, namaWarungCtrl.text, namaOwnerCtrl.text, pinCtrl.text);
+                  
+                  if (sukses && mounted) {
+                    context.read<AuthProvider>().perbaruiProfilLokal(namaOwnerCtrl.text, pinCtrl.text);
+                    setState(() {}); 
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profil berhasil diperbarui')));
+                  } else {
+                    setModalState(() => loading = false);
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal memperbarui profil')));
+                  }
+                }, 
+                child: loading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Simpan Update'),
+              ),
+            ],
+          );
+        }
       ),
     );
   }
