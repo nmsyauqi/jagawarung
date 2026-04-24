@@ -28,44 +28,6 @@ class _DashboardPageState extends State<DashboardPage> {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TutupShiftPage()));
   }
 
-  void _logout() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: AppTheme.border, borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 24),
-            const Icon(Icons.logout_rounded, size: 40, color: AppTheme.danger),
-            const SizedBox(height: 16),
-            Text('Keluar dari Sistem?', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 8),
-            Text('Shift yang masih berjalan tidak akan ditutup.', style: GoogleFonts.inter(fontSize: 14, color: AppTheme.textMuted), textAlign: TextAlign.center),
-            const SizedBox(height: 24),
-            Row(
-               children: [
-                 Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal'))),
-                 const SizedBox(width: 12),
-                 Expanded(child: ElevatedButton(
-                   style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
-                   onPressed: () { 
-                     Navigator.pop(ctx); 
-                     context.read<AuthProvider>().logout(); 
-                   },
-                   child: const Text('Keluar'),
-                 )),
-               ],
-             ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final targetProvider = context.watch<ShiftProvider>();
@@ -109,10 +71,6 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ],
         ),
-        actions: [
-          _appBarBtn(Icons.logout_rounded, _logout),
-          const SizedBox(width: 8),
-        ],
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
@@ -300,19 +258,7 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _appBarBtn(IconData icon, VoidCallback onTap) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 4),
-      child: IconButton(
-        onPressed: onTap,
-        icon: Container(
-          width: 36, height: 36,
-          decoration: BoxDecoration(color: AppTheme.surfaceDim, borderRadius: BorderRadius.circular(10)),
-          child: Icon(icon, size: 18, color: AppTheme.textBody),
-        ),
-      ),
-    );
-  }
+
 
   Widget _statItem(String label, String value, IconData icon, Color color) {
     return Padding(

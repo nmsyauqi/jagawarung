@@ -27,6 +27,22 @@ class DatabaseService {
     }
   }
 
+  Future<bool> tutupPaksaShift(ShiftModel shift) async {
+    try {
+      // Bos menutup paksa: Uang masuk sistem dianggap sebagai Kas Akhir
+      final waktuSelesai = DateTime.now();
+      await _db.collection('shifts').doc(shift.idShift).update({
+        'waktu_selesai': waktuSelesai.toIso8601String(),
+        'saldo_akhir': (shift.saldoAwal + (shift.totalUangMasuk ?? 0)),
+        'selisih_kas': 0, // Dianggap nol karena dipaksa cocok oleh bos
+      });
+      return true;
+    } catch (e) {
+      debugPrint("❌ Error tutup paksa: $e");
+      return false;
+    }
+  }
+
   // --- FUNGSI AUTENTIKASI & REGISTRASI ---
   
   Future<UserModel?> loginUser(String idWarung, String pin) async {

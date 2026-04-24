@@ -9,6 +9,11 @@ import '../services/database_service.dart';
 import '../models/user_model.dart';
 import '../models/transaksi_model.dart';
 import '../models/shift_model.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'dart:typed_data';
+import 'package:url_launcher/url_launcher.dart';
 
 class OwnerDashboard extends StatefulWidget {
   const OwnerDashboard({super.key});
@@ -149,11 +154,12 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
               children: [
                 Text('Histori Shift', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
                 ElevatedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Fitur PDF segera hadir')));
-                  },
+                  onPressed: snapshot.hasData ? () {
+                    final shifts = snapshot.data!.docs.map((doc) => ShiftModel.fromMap(doc.data() as Map<String, dynamic>)).toList();
+                     _buatDanBukaPdf(shifts);
+                  } : null,
                   icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
-                  label: const Text('Ekspor PDF'),
+                  label: const Text('Ekspor Laporan'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.surface,
                     foregroundColor: AppTheme.danger,
@@ -283,7 +289,48 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                       ],
                     ),
                   )
-                ]
+                ],
+                
+                // Tambahan Tombol Darurat Bos: Tutup Paksa
+                if (!isSelesai) ...[
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.power_settings_new_rounded),
+                      label: const Text('Tutup Paksa (Force Close)'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.danger, 
+                        side: BorderSide(color: AppTheme.danger.withValues(alpha: 0.5)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      onPressed: () async {
+                        bool sukses = await _dbService.tutupPaksaShift(shift);
+                        if (sukses && context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Shift berhasil ditutup paksa oleh Sistem!')));
+                        }
+                      },
+                    ),
+                  ),
+                ],
+                
+                // Tambahan Tombol Struk WhatsApp untuk Shift Selesai
+                if (isSelesai) ...[
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.receipt_long_rounded),
+                      label: const Text('Lihat Struk Digital'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.primary, 
+                        side: BorderSide(color: AppTheme.primary.withValues(alpha: 0.5)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      onPressed: () => _showStrukWhatsapp(shift),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -545,6 +592,127 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             ],
           );
         }
+      ),
+    );
+  }
+
+  Future<void> _buatDanBukaPdf(List<ShiftModel> historiShift) async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('Laporan Riwayat Shift Penuh - JagaWarung', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 20),
+              pw.TableHelper.fromTextArray(
+                context: context,
+                headers: ['Kasir', 'Shift Mulai', 'Shift Selesai', 'Pendapatan', 'Selisih Kas'],
+                data: historiShift.map((s) {
+                  return [
+                    s.namaPengguna,
+                    '${s.waktuMulai.day}/${s.waktuMulai.month}/${s.waktuMulai.year} ${s.waktuMulai.hour.toString().padLeft(2, "0")}:${s.waktuMulai.minute.toString().padLeft(2, "0")}',
+                    s.waktuSelesai != null ? '${s.waktuSelesai!.hour.toString().padLeft(2, "0")}:${s.waktuSelesai!.minute.toString().padLeft(2, "0")}' : 'Belum Selesai',
+                    'Rp ${s.totalUangMasuk ?? 0}',
+                    'Rp ${s.selisihKas}',
+                  ];
+                }).toList(),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+      name: 'Laporan_Shift_JagaWarung.pdf',
+    );
+  }
+
+  // --- FITUR STRUK WHATSAPP ---
+
+  void _showStrukWhatsapp(ShiftModel shift) {
+    String tgl = "${shift.waktuMulai.day}/${shift.waktuMulai.month}/${shift.waktuMulai.year}";
+    String jamselesai = shift.waktuSelesai != null ? "${shift.waktuSelesai!.hour.toString().padLeft(2, '0')}:${shift.waktuSelesai!.minute.toString().padLeft(2, '0')}" : "??:??";
+    String jammulai = "${shift.waktuMulai.hour.toString().padLeft(2, '0')}:${shift.waktuMulai.minute.toString().padLeft(2, '0')}";
+    
+    // Teks Mentah yang akan dikirim ke WhatsApp
+    String waText = "*STRUK REKAP SHIFT*\n"
+        "JAGA WARUNG PUSAT\n"
+        "-------------------\n"
+        "Tgl: $tgl\n"
+        "Shift: $jammulai - $jamselesai\n"
+        "Kasir: ${shift.namaPengguna}\n"
+        "Jml Transaksi: ${shift.totalTransaksi}x\n"
+        "-------------------\n"
+        "Modal Awal   : Rp ${shift.saldoAwal}\n"
+        "Msk Aplikasi : Rp ${shift.totalUangMasuk ?? 0}\n"
+        "Setoran Laci : Rp ${shift.saldoAkhir}\n"
+        "Selisih Kas  : Rp ${shift.selisihKas}\n"
+        "-------------------\n"
+        "Dicetak otomatis oleh Sistem.";
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.white, // Kertas termal
+        shape: const RoundedRectangleBorder(),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('JAGA WARUNG', style: GoogleFonts.firaMono(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black)),
+              Text('Rekapitulasi Shift', style: GoogleFonts.firaMono(fontSize: 14, color: Colors.black87)),
+              const SizedBox(height: 12),
+              const Text('--------------------------------', style: TextStyle(fontFamily: 'Courier', color: Colors.black)),
+              _barisStruk('Kasir:', shift.namaPengguna),
+              _barisStruk('Tgl:', tgl),
+              _barisStruk('Shift:', '$jammulai - $jamselesai'),
+              _barisStruk('Nota:', '${shift.totalTransaksi} transaksi'),
+              const Text('--------------------------------', style: TextStyle(fontFamily: 'Courier', color: Colors.black)),
+              _barisStruk('Modal Awal:', 'Rp ${shift.saldoAwal}'),
+              _barisStruk('Di Sistem :', 'Rp ${shift.totalUangMasuk ?? 0}'),
+              _barisStruk('Setoran :', 'Rp ${shift.saldoAkhir}'),
+              const Text('--------------------------------', style: TextStyle(fontFamily: 'Courier', color: Colors.black)),
+              _barisStruk('SELISIH:', 'Rp ${shift.selisihKas}', isBold: true),
+              const Text('--------------------------------', style: TextStyle(fontFamily: 'Courier', color: Colors.black)),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.wechat_rounded, color: Colors.white),
+                label: const Text('Kirim via WhatsApp', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF25D366)),
+                onPressed: () async {
+                  final url = Uri.parse("https://wa.me/?text=${Uri.encodeComponent(waText)}");
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal menembak aplikasi browser/WA')));
+                  }
+                },
+              ),
+              const SizedBox(height: 8),
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Tutup Kertas'))
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _barisStruk(String label, String value, {bool isBold = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: GoogleFonts.firaMono(fontSize: 13, color: Colors.black87, fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
+          Text(value, style: GoogleFonts.firaMono(fontSize: 13, color: Colors.black, fontWeight: isBold ? FontWeight.bold : FontWeight.w600)),
+        ],
       ),
     );
   }
