@@ -174,10 +174,9 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
               const Center(child: Text('Belum ada riwayat shift')),
             
             if (snapshot.hasData)
-              ...snapshot.data!.docs.map((doc) {
-                final shift = ShiftModel.fromMap(doc.data() as Map<String, dynamic>);
-                return _rekapShiftCard(shift);
-              }),
+              ...(snapshot.data!.docs.map((doc) => ShiftModel.fromMap(doc.data() as Map<String, dynamic>)).toList()
+                    ..sort((a, b) => b.waktuMulai.compareTo(a.waktuMulai)))
+                  .map((shift) => _rekapShiftCard(shift)),
           ],
         );
       }
@@ -189,8 +188,13 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     int selisih = shift.selisihKas;
     
     // Logika Status Kecocokan
-    Color statusColor = !isSelesai ? Colors.orange : (selisih == 0 ? Colors.green : Colors.red);
-    String teksStatus = !isSelesai ? "Shift Aktif" : (selisih == 0 ? "Data Cocok" : "Tidak Cocok (Selisih)");
+    Color statusColor = !isSelesai 
+        ? Colors.orange 
+        : (shift.isForceClosed ? const Color(0xFFB91C1C) : (selisih == 0 ? Colors.green : Colors.red));
+        
+    String teksStatus = !isSelesai 
+        ? "Shift Aktif" 
+        : (shift.isForceClosed ? "Kasir Bermasalah" : (selisih == 0 ? "Data Cocok" : "Tidak Cocok (Selisih)"));
     
     // Format Waktu
     String jamMulai = "${shift.waktuMulai.hour.toString().padLeft(2, '0')}:${shift.waktuMulai.minute.toString().padLeft(2, '0')}";

@@ -35,6 +35,7 @@ class DatabaseService {
         'waktu_selesai': waktuSelesai.toIso8601String(),
         'saldo_akhir': (shift.saldoAwal + (shift.totalUangMasuk ?? 0)),
         'selisih_kas': 0, // Dianggap nol karena dipaksa cocok oleh bos
+        'is_force_closed': true, // Rekam jejak bahwa ini ditutup bos
       });
       return true;
     } catch (e) {

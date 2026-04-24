@@ -161,7 +161,6 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
                     TextField(
                       controller: _desktopNominalCtrl,
                       keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       autofocus: true,
                       textAlign: TextAlign.right,
                       style: GoogleFonts.plusJakartaSans(fontSize: 48, fontWeight: FontWeight.w800, color: AppTheme.textDark),
@@ -179,15 +178,31 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
                           final fmt = NumberFormat('#,###', 'id_ID').format(n);
                           _desktopNominalCtrl.value = TextEditingValue(text: fmt, selection: TextSelection.collapsed(offset: fmt.length));
                         }
+                        setState(() {}); // Paksa refresh tombol Simpan Transaksi agar nyala!
                       },
                     )
                   else
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text('Rp ', style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w600, color: AppTheme.textMuted)),
-                        Text(_formattedNominal, style: GoogleFonts.plusJakartaSans(fontSize: 48, fontWeight: FontWeight.w800, color: AppTheme.textDark)),
-                      ],
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: AppTheme.primary, width: 2),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text('Rp ', style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w600, color: AppTheme.textMuted)),
+                          Expanded(
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              reverse: true,
+                              child: Text(_formattedNominal, style: GoogleFonts.plusJakartaSans(fontSize: 48, fontWeight: FontWeight.w800, color: AppTheme.textDark)),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     
                   const SizedBox(height: 12),

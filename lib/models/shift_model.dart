@@ -11,6 +11,7 @@ class ShiftModel {
   final int? saldoAkhir;
   final int? totalUangMasuk; 
   final int? totalTransaksi; 
+  final bool isForceClosed;
 
   ShiftModel({
     required this.idShift,
@@ -23,6 +24,7 @@ class ShiftModel {
     this.saldoAkhir,
     this.totalUangMasuk,
     this.totalTransaksi,
+    this.isForceClosed = false,
   });
 
   // ---> Rumus Selisih Kas Otomatis <---
@@ -55,6 +57,7 @@ class ShiftModel {
       'saldo_akhir': saldoAkhir,
       'total_uang_masuk': totalUangMasuk,
       'total_transaksi': totalTransaksi,
+      'is_force_closed': isForceClosed,
     };
   }
 
@@ -70,6 +73,7 @@ class ShiftModel {
       saldoAkhir: map['saldo_akhir']?.toInt(),
       totalUangMasuk: map['total_uang_masuk']?.toInt(),
       totalTransaksi: map['total_transaksi']?.toInt(),
+      isForceClosed: map['is_force_closed'] ?? false,
     );
   }
 }

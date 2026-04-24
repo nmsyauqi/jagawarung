@@ -153,7 +153,6 @@ class _TutupShiftPageState extends State<TutupShiftPage> {
                     controller: _controller,
                     keyboardType: TextInputType.number,
                     autofocus: true,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     style: GoogleFonts.plusJakartaSans(fontSize: 28, fontWeight: FontWeight.w700, color: AppTheme.textDark),
                     decoration: InputDecoration(
                       prefixText: 'Rp  ',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -238,6 +239,8 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
               TextField(
                 controller: _passCtrl,
                 obscureText: _obscureText,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 style: GoogleFonts.inter(fontSize: 15),
                 decoration: InputDecoration(
                   hintText: 'PIN / Password',
@@ -350,22 +353,22 @@ class _DaftarWarungPageState extends State<DaftarWarungPage> {
 
             Text('Nama Warung / Toko', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
             const SizedBox(height: 8),
-            TextField(controller: _namaWarungCtrl, decoration: const InputDecoration(hintText: 'Warung Madura Jaya', prefixIcon: Icon(Icons.storefront_rounded, size: 20), fillColor: AppTheme.bg, filled: true)),
-            const SizedBox(height: 20),
+            TextField(controller: _namaWarungCtrl, maxLength: 30, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(hintText: 'Warung Madura Jaya', prefixIcon: Icon(Icons.storefront_rounded, size: 20), fillColor: AppTheme.bg, filled: true, counterText: '')),
+            const SizedBox(height: 16),
 
             Text('Nama Pemilik (Owner)', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
             const SizedBox(height: 8),
-            TextField(controller: _namaOwnerCtrl, decoration: const InputDecoration(hintText: 'Budi Santoso', prefixIcon: Icon(Icons.person_rounded, size: 20), fillColor: AppTheme.bg, filled: true)),
-            const SizedBox(height: 20),
+            TextField(controller: _namaOwnerCtrl, maxLength: 30, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(hintText: 'Budi Santoso', prefixIcon: Icon(Icons.person_rounded, size: 20), fillColor: AppTheme.bg, filled: true, counterText: '')),
+            const SizedBox(height: 16),
 
             Text('ID Warung (Username Unik)', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
             const SizedBox(height: 8),
-            TextField(controller: _idCtrl, decoration: const InputDecoration(hintText: 'warung_budi', prefixIcon: Icon(Icons.tag_rounded, size: 20), fillColor: AppTheme.bg, filled: true)),
-            const SizedBox(height: 20),
+            TextField(controller: _idCtrl, maxLength: 20, inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))], decoration: const InputDecoration(hintText: 'warung_budi', prefixIcon: Icon(Icons.tag_rounded, size: 20), fillColor: AppTheme.bg, filled: true, counterText: '')),
+            const SizedBox(height: 16),
 
-            Text('Kata Sandi Owner (Angka)', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
+            Text('PIN Akses Rahasia', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
             const SizedBox(height: 8),
-            TextField(controller: _passCtrl, obscureText: true, keyboardType: TextInputType.number, decoration: const InputDecoration(hintText: '0000', prefixIcon: Icon(Icons.lock_outline_rounded, size: 20), fillColor: AppTheme.bg, filled: true)),
+            TextField(controller: _passCtrl, obscureText: true, keyboardType: TextInputType.number, maxLength: 6, inputFormatters: [FilteringTextInputFormatter.digitsOnly], decoration: const InputDecoration(hintText: 'Maks. 6 digit angka', prefixIcon: Icon(Icons.lock_outline_rounded, size: 20), fillColor: AppTheme.bg, filled: true, counterText: '')),
             
             const SizedBox(height: 40),
             SizedBox(
