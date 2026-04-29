@@ -5,6 +5,7 @@ import '../models/shift_model.dart';
 import '../models/transaksi_model.dart';
 import '../models/user_model.dart';
 import '../models/warung_model.dart';
+import '../models/produk_model.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -171,6 +172,49 @@ class DatabaseService {
       return true;
     } catch (e) {
       debugPrint("❌ Error update profil: $e");
+      return false;
+    }
+  }
+
+  // ============================================
+  // --- FUNGSI KATALOG PRODUK (BARANG) ---
+  // ============================================
+
+  Stream<QuerySnapshot> streamProduk(String idWarung) {
+    return _db.collection('produks')
+        .where('id_warung', isEqualTo: idWarung)
+        .snapshots();
+  }
+
+  Future<bool> tambahProduk(ProdukModel produk) async {
+    try {
+      await _db.collection('produks').doc(produk.idProduk).set(produk.toMap());
+      return true;
+    } catch (e) {
+      debugPrint("❌ Error tambah produk: $e");
+      return false;
+    }
+  }
+
+  Future<bool> editProduk(String idProduk, String namaBaru, int hargaBaru) async {
+    try {
+      await _db.collection('produks').doc(idProduk).update({
+        'nama_produk': namaBaru,
+        'harga': hargaBaru,
+      });
+      return true;
+    } catch (e) {
+      debugPrint("❌ Error edit produk: $e");
+      return false;
+    }
+  }
+
+  Future<bool> hapusProduk(String idProduk) async {
+    try {
+      await _db.collection('produks').doc(idProduk).delete();
+      return true;
+    } catch (e) {
+      debugPrint("❌ Error hapus produk: $e");
       return false;
     }
   }

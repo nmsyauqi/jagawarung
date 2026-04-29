@@ -9,6 +9,7 @@ import '../services/database_service.dart';
 import '../models/user_model.dart';
 import '../models/transaksi_model.dart';
 import '../models/shift_model.dart';
+import '../models/produk_model.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -124,6 +125,8 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                 ],
               ),
             ),
+            const SizedBox(height: 32),
+            _buildKatalogProduk(idWarung),
           ],
         );
       }
@@ -136,6 +139,129 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         Text(val, style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.accentLight)),
         Text(label, style: GoogleFonts.inter(fontSize: 12, color: Colors.white70)),
       ],
+    );
+  }
+
+  // --- KOMPONEN KATALOG PRODUK UNTUK DASHBOARD OWNER ---
+  Widget _buildKatalogProduk(String idWarung) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Katalog Produk', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
+            IconButton(
+              onPressed: () => _showTambahProdukDialog(idWarung),
+              icon: const Icon(Icons.add_box_rounded, color: AppTheme.primary),
+              style: IconButton.styleFrom(backgroundColor: AppTheme.surfaceDim),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        StreamBuilder<QuerySnapshot>(
+          stream: _dbService.streamProduk(idWarung),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+            if (snapshot.data!.docs.isEmpty) {
+              return Center(child: Padding(padding: const EdgeInsets.all(16.0), child: Text('Belum ada produk. Tambahkan sekarang.', style: GoogleFonts.inter(color: AppTheme.textMuted))));
+            }
+
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: snapshot.data!.docs.length,
+              itemBuilder: (context, index) {
+                var produk = ProdukModel.fromMap(snapshot.data!.docs[index].data() as Map<String, dynamic>);
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
+                  child: ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(color: AppTheme.surfaceDim, borderRadius: BorderRadius.circular(8)),
+                      child: const Icon(Icons.fastfood_rounded, color: AppTheme.primary),
+                    ),
+                    title: Text(produk.namaProduk, style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                    subtitle: Text('Rp ${produk.harga}', style: GoogleFonts.inter(color: AppTheme.textMuted)),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit_rounded, color: AppTheme.primary, size: 20),
+                          onPressed: () => _showEditProdukDialog(produk),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 20),
+                          onPressed: () => _dbService.hapusProduk(produk.idProduk),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  void _showTambahProdukDialog(String idWarung) {
+    final namaCtrl = TextEditingController();
+    final hargaCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Tambah Produk'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: namaCtrl, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'Nama Produk (cth: Roti)')),
+            TextField(controller: hargaCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Harga (Rp)')),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          ElevatedButton(onPressed: () async {
+            if (namaCtrl.text.isEmpty || hargaCtrl.text.isEmpty) return;
+            ProdukModel produkBaru = ProdukModel(
+              idProduk: "PROD-${DateTime.now().millisecondsSinceEpoch}",
+              idWarung: idWarung,
+              namaProduk: namaCtrl.text,
+              harga: int.parse(hargaCtrl.text),
+            );
+            await _dbService.tambahProduk(produkBaru);
+            if (ctx.mounted) Navigator.pop(ctx);
+          }, child: const Text('Simpan')),
+        ],
+      ),
+    );
+  }
+
+  void _showEditProdukDialog(ProdukModel produk) {
+    final namaCtrl = TextEditingController(text: produk.namaProduk);
+    final hargaCtrl = TextEditingController(text: produk.harga.toString());
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Edit Produk'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: namaCtrl, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'Nama Produk')),
+            TextField(controller: hargaCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Harga (Rp)')),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          ElevatedButton(onPressed: () async {
+            if (namaCtrl.text.isEmpty || hargaCtrl.text.isEmpty) return;
+            await _dbService.editProduk(produk.idProduk, namaCtrl.text, int.parse(hargaCtrl.text));
+            if (ctx.mounted) Navigator.pop(ctx);
+          }, child: const Text('Simpan')),
+        ],
+      ),
     );
   }
 
@@ -501,8 +627,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             _infoRow(Icons.badge, 'ID Warung (Username)', owner.idWarung),
             const Divider(height: 32),
             _infoRow(Icons.person, 'Nama Pemilik', owner.nama),
-            const Divider(height: 32),
-            _infoRow(Icons.security, 'PIN Akses Pemilik', owner.pin),
+            // Baris PIN dihapus untuk keamanan layar
           ],
         );
       }
