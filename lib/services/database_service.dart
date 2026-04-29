@@ -129,8 +129,12 @@ class DatabaseService {
   // --- PIPELINE DATA REAL-TIME UNTUK DASHBOARD ---
 
   Stream<QuerySnapshot> streamTransaksiHariIni(String idWarung) {
+    DateTime now = DateTime.now();
+    DateTime awalHariIni = DateTime(now.year, now.month, now.day); // Tepat jam 00:00:00 hari ini
+    
     return _db.collection('transaksis')
         .where('id_warung', isEqualTo: idWarung)
+        .where('waktu_transaksi', isGreaterThanOrEqualTo: awalHariIni.toIso8601String())
         .snapshots();
   }
 

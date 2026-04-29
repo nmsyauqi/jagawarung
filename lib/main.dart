@@ -7,10 +7,11 @@ import 'firebase_options.dart';
 import 'theme.dart';
 
 // Import Screen UI
+import 'screens/splash_screen.dart';
 import 'screens/login_page.dart';
 import 'screens/owner_dashboard.dart';
 import 'screens/buka_shift_page.dart';
-import 'screens/dashboard_page.dart'; // Asumsi ini adalah layar mesin kasir
+import 'screens/dashboard_page.dart';
 
 // Import Provider Backend
 import 'providers/shift_provider.dart';
@@ -44,7 +45,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'JagaWarung',
       theme: AppTheme.theme,
-      home: const WrapperScreen(), // Seluruh rute dikendalikan dari sini
+      home: const SplashScreen(), // Animasi Intro 3 Detik baru masuk ke WrapperScreen
     );
   }
 }

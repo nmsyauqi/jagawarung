@@ -187,46 +187,72 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     bool isSelesai = shift.waktuSelesai != null;
     int selisih = shift.selisihKas;
     
-    // Logika Status Kecocokan
-    Color statusColor = !isSelesai 
-        ? Colors.orange 
-        : (shift.isForceClosed ? const Color(0xFFB91C1C) : (selisih == 0 ? Colors.green : Colors.red));
-        
-    String teksStatus = !isSelesai 
-        ? "Shift Aktif" 
-        : (shift.isForceClosed ? "Kasir Bermasalah" : (selisih == 0 ? "Data Cocok" : "Tidak Cocok (Selisih)"));
+    // Logika Status & Warna Dinamis
+    Color statusColor;
+    String teksStatus;
+    
+    if (!isSelesai) {
+      statusColor = Colors.orange;
+      teksStatus = "Shift Aktif";
+    } else if (shift.isForceClosed) {
+      statusColor = Colors.red.shade900; // Merah pekat
+      teksStatus = "Kasir Bermasalah";
+    } else if (selisih > 0) {
+      statusColor = Colors.red; // Merah biasa
+      teksStatus = "Uang Lebih (Plus)";
+    } else if (selisih < 0) {
+      statusColor = Colors.red.shade300; // Merah muda
+      teksStatus = "Data Tidak Cocok (Minus)";
+    } else {
+      statusColor = Colors.green; // Hijau
+      teksStatus = "Data Cocok";
+    }
     
     // Format Waktu
     String jamMulai = "${shift.waktuMulai.hour.toString().padLeft(2, '0')}:${shift.waktuMulai.minute.toString().padLeft(2, '0')}";
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 28), // Jarak lega antarlaporan
+      clipBehavior: Clip.antiAlias, // Agar border dalam tidak tumpah
       decoration: BoxDecoration(
         color: AppTheme.surface, 
         borderRadius: BorderRadius.circular(16), 
-        border: Border.all(color: AppTheme.border),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 8, offset: const Offset(0, 4))],
+        border: Border.all(color: AppTheme.border, width: 1.5), // Garis luar seragam agar Flutter tidak crash
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4))],
       ),
-      child: Column(
-        children: [
+      child: Container(
+        decoration: BoxDecoration(
+           // Garis TEBAL di pinggir kiri dipindah ke sini
+           border: Border(left: BorderSide(color: statusColor, width: 8)),
+        ),
+        child: Column(
+          children: [
           // Header Card
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.1),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16))
+              color: AppTheme.bg, // Background header abu-abu lembut
+              border: Border(bottom: BorderSide(color: AppTheme.border, width: 1)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Icon(isSelesai ? Icons.check_circle : Icons.timer, color: statusColor, size: 18),
-                    const SizedBox(width: 8),
-                    Text(teksStatus, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, color: statusColor)),
-                  ],
+                // Badge Label Status dengan Background Warna Solid (Peaked Color)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: statusColor, // Latar teks warna solid (merah pekat, dsb)
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(!isSelesai ? Icons.timer : Icons.assignment_rounded, color: Colors.white, size: 14),
+                      const SizedBox(width: 6),
+                      Text(teksStatus, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 12)),
+                    ],
+                  ),
                 ),
-                Text("Kasir: ${shift.namaPengguna}", style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13)),
+                Text("Kasir: ${shift.namaPengguna}", style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13, color: AppTheme.textDark)),
               ],
             ),
           ),
@@ -236,47 +262,77 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Mulai Shift', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textMuted)),
-                        Text(jamMulai, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text('Durasi', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textMuted)),
-                        Text(shift.durasi, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text('Transaksi', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textMuted)),
-                        Text('${shift.totalTransaksi ?? 0}x', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
-                      ],
-                    ),
-                  ],
-                ),
-                const Divider(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Uang Masuk (Sistem):', style: TextStyle(color: AppTheme.textMuted)),
-                    Text('Rp ${shift.totalUangMasuk ?? 0}', style: const TextStyle(fontWeight: FontWeight.w600)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(isSelesai ? 'Hitungan Laci Kasir:' : 'Modal Awal Laci:', style: TextStyle(color: AppTheme.textMuted)),
-                    Text('Rp ${isSelesai ? shift.saldoAkhir : shift.saldoAwal}', style: const TextStyle(fontWeight: FontWeight.w600)),
-                  ],
+                // Container gaya Tabel / Grid
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppTheme.border),
+                  ),
+                  child: Column(
+                    children: [
+                      // Baris 1: Mulai, Durasi, Transaksi
+                      Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Mulai Shift', style: GoogleFonts.inter(fontSize: 11, color: AppTheme.textMuted)),
+                                const SizedBox(height: 2),
+                                Text(jamMulai, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, fontSize: 13)),
+                              ],
+                            )),
+                            Container(width: 1, height: 30, color: AppTheme.border),
+                            Expanded(child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text('Durasi', style: GoogleFonts.inter(fontSize: 11, color: AppTheme.textMuted)),
+                                const SizedBox(height: 2),
+                                Text(shift.durasi, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, fontSize: 13)),
+                              ],
+                            )),
+                            Container(width: 1, height: 30, color: AppTheme.border),
+                            Expanded(child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text('Transaksi', style: GoogleFonts.inter(fontSize: 11, color: AppTheme.textMuted)),
+                                const SizedBox(height: 2),
+                                Text('${shift.totalTransaksi ?? 0}x', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, fontSize: 13)),
+                              ],
+                            )),
+                          ],
+                        ),
+                      ),
+                      const Divider(height: 1, thickness: 1),
+                      
+                      // Baris 2: Uang Sistem
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Uang Sistem (Aplikasi):', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textMuted)),
+                            Text('Rp ${shift.totalUangMasuk ?? 0}', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
+                      const Divider(height: 1, thickness: 1),
+                      
+                      // Baris 3: Laci
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(isSelesai ? 'Laporan Fisik Laci:' : 'Modal Awal Laci:', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textMuted)),
+                            Text('Rp ${isSelesai ? shift.saldoAkhir : shift.saldoAwal}', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 
                 // Jika sudah selesai dan ada selisih, tampilkan warna merah
@@ -339,6 +395,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             ),
           ),
         ],
+       ),
       ),
     );
   }
