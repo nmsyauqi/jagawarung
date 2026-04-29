@@ -52,12 +52,14 @@ class _DashboardPageState extends State<DashboardPage> {
         title: Row(
           children: [
             Container(
-              width: 40, height: 40,
+              width: 42, height: 42,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFF059669), Color(0xFF10B981)]),
-                borderRadius: BorderRadius.circular(12),
+                color: const Color(0xFF6B7280), // Warna abu-abu gelap khas Guest Account
+                borderRadius: BorderRadius.circular(8), // Sudut agak tegas (square-ish)
               ),
-              child: Center(child: Text(p_inisial, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white))),
+              child: const Center(
+                child: Icon(Icons.person_outline_rounded, color: Colors.white, size: 28),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(

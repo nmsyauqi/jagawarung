@@ -435,7 +435,16 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.border)),
       child: Row(
         children: [
-          CircleAvatar(backgroundColor: AppTheme.primarySoft, child: Text(user.nama[0], style: const TextStyle(color: Colors.white))),
+          Container(
+            width: 46, height: 46, // Sedikit lebih besar agar pas di card
+            decoration: BoxDecoration(
+              color: const Color(0xFF6B7280), // Abu-abu gelap
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Center(
+              child: Icon(Icons.person_outline_rounded, color: Colors.white, size: 28),
+            ),
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
