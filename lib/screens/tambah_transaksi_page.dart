@@ -6,6 +6,9 @@ import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
 import '../providers/shift_provider.dart';
 import '../models/transaksi_model.dart';
+import '../models/produk_model.dart';
+import '../services/database_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class TambahTransaksiPage extends StatefulWidget {
   const TambahTransaksiPage({super.key});
@@ -20,6 +23,10 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
   final _desktopNominalCtrl = TextEditingController(); // Khusus form input Desktop
   bool _loading = false;
   bool _showNotes = false;
+  
+  // -- Keranjang Hybrid --
+  final Map<String, int> _keranjangCount = {}; 
+  final Map<String, ProdukModel> _keranjangProduk = {}; 
   
   // Riwayat transaksi khusus selama membuka halaman ini
   final List<TransaksiModel> _riwayatSesiIni = [];
@@ -49,32 +56,77 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
     return NumberFormat('#,###', 'id_ID').format(n);
   }
 
-  Future<void> _simpan() async {
+  int get _totalKeranjang {
+    int sum = 0;
+    _keranjangCount.forEach((id, qty) {
+      sum += (_keranjangProduk[id]!.harga * qty);
+    });
+    return sum;
+  }
+
+  int get _totalManual {
     final tPlatform = Theme.of(context).platform;
     final isDesktop = tPlatform == TargetPlatform.windows || tPlatform == TargetPlatform.macOS || tPlatform == TargetPlatform.linux || MediaQuery.of(context).size.width > 600;
-    
-    // Ambil nominal dari Numpad (Mobile) atau Textfield (Desktop)
     final valStr = isDesktop ? _desktopNominalCtrl.text.replaceAll('.', '') : _nominal;
-    if (valStr.isEmpty) return;
-    
-    final val = double.tryParse(valStr) ?? 0;
-    if (val <= 0) return;
+    return int.tryParse(valStr) ?? 0;
+  }
+
+  int get _totalSemua => _totalKeranjang + _totalManual;
+
+  void _tambahKeKeranjang(ProdukModel p) {
+    setState(() {
+      _keranjangProduk[p.idProduk] = p;
+      _keranjangCount[p.idProduk] = (_keranjangCount[p.idProduk] ?? 0) + 1;
+    });
+  }
+
+  void _kurangiDariKeranjang(String id) {
+    setState(() {
+      if (_keranjangCount.containsKey(id)) {
+        if (_keranjangCount[id]! > 1) {
+          _keranjangCount[id] = _keranjangCount[id]! - 1;
+        } else {
+          _keranjangCount.remove(id);
+          _keranjangProduk.remove(id);
+        }
+      }
+    });
+  }
+
+  Future<void> _simpan() async {
+    final total = _totalSemua;
+    if (total <= 0) return;
 
     setState(() => _loading = true);
     await Future.delayed(const Duration(milliseconds: 200));
 
-    final note = _catatanCtrl.text.trim().isEmpty ? null : _catatanCtrl.text.trim();
+    // Bangun catatan transaksi gabungan
+    List<String> rincian = [];
+    _keranjangCount.forEach((id, qty) {
+      final p = _keranjangProduk[id]!;
+      rincian.add("${p.namaProduk} (x$qty)");
+    });
+    if (_totalManual > 0) {
+      rincian.add("Manual: ${NumberFormat('#,###', 'id_ID').format(_totalManual)}");
+    }
+    
+    final customNote = _catatanCtrl.text.trim();
+    String noteFinal = rincian.join(', ');
+    if (customNote.isNotEmpty) {
+      noteFinal += noteFinal.isNotEmpty ? " | Note: $customNote" : customNote;
+    }
+
     final idTx = 'TX_${DateTime.now().millisecondsSinceEpoch}';
 
     // TRIGGER KE BACKEND
-    context.read<ShiftProvider>().tambahTransaksi(idTx, val.toInt(), note: note);
+    context.read<ShiftProvider>().tambahTransaksi(idTx, total, note: noteFinal.isEmpty ? null : noteFinal);
 
     final trxLocal = TransaksiModel(
       idTransaksi: idTx,
       idShift: context.read<ShiftProvider>().activeShift!.idShift,
       idWarung: context.read<ShiftProvider>().activeShift!.idWarung,
-      nominal: val.toInt(),
-      note: note,
+      nominal: total,
+      note: noteFinal.isEmpty ? null : noteFinal,
       waktuTransaksi: DateTime.now(),
     );
     
@@ -83,6 +135,8 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
     // Simpan ke riwayat sesi ini agar kasir bisa lihat, lalu reset input
     setState(() {
       _riwayatSesiIni.insert(0, trxLocal); // Masukkan di urutan teratas
+      _keranjangCount.clear();
+      _keranjangProduk.clear();
       _nominal = '';
       _desktopNominalCtrl.clear();
       _catatanCtrl.clear();
@@ -115,6 +169,40 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
       ),
       body: Column(
         children: [
+          // --- KATALOG BAR ---
+          StreamBuilder<QuerySnapshot>(
+            stream: DatabaseService().streamProduk(context.read<ShiftProvider>().activeShift!.idWarung),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const SizedBox.shrink();
+              return Container(
+                height: 60,
+                color: Colors.white,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  itemCount: snapshot.data!.docs.length,
+                  itemBuilder: (ctx, i) {
+                    final p = ProdukModel.fromMap(snapshot.data!.docs[i].data() as Map<String, dynamic>);
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.add_shopping_cart_rounded, size: 16),
+                        label: Text(p.namaProduk),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.surfaceDim,
+                          foregroundColor: AppTheme.textDark,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () => _tambahKeKeranjang(p),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+
           // ── Display Nominal & Riwayat Sesi ──
           Expanded(
             child: SingleChildScrollView( // Kunci anti-overflow (Garis kuning)
@@ -156,6 +244,37 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
                     const Divider(),
                     const SizedBox(height: 8),
                   
+                  // --- KERANJANG (HYBRID) ---
+                  if (_keranjangCount.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: AppTheme.primarySoft.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text('Isi Keranjang:', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.primary)),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8, runSpacing: 8,
+                            alignment: WrapAlignment.end,
+                            children: _keranjangCount.keys.map((id) {
+                              final p = _keranjangProduk[id]!;
+                              final qty = _keranjangCount[id]!;
+                              return InputChip(
+                                label: Text("${p.namaProduk} (x$qty)"),
+                                onDeleted: () => _kurangiDariKeranjang(id),
+                                deleteIconColor: AppTheme.danger,
+                                backgroundColor: Colors.white,
+                                labelStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+
                   // Input Utama (Responsive: TextField jika Desktop, Custom Text jika Mobile)
                   if (isDesktop)
                     TextField(
@@ -198,7 +317,15 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
                             child: SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
                               reverse: true,
-                              child: Text(_formattedNominal, style: GoogleFonts.plusJakartaSans(fontSize: 48, fontWeight: FontWeight.w800, color: AppTheme.textDark)),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(NumberFormat('#,###', 'id_ID').format(_totalSemua), style: GoogleFonts.plusJakartaSans(fontSize: 48, fontWeight: FontWeight.w800, color: AppTheme.textDark)),
+                                  if (_keranjangCount.isNotEmpty && _totalManual > 0)
+                                    Text('Barang: Rp ${NumberFormat('#,###', 'id_ID').format(_totalKeranjang)} + Manual: Rp ${NumberFormat('#,###', 'id_ID').format(_totalManual)}', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textMuted)),
+                                ],
+                              ),
                             ),
                           ),
                         ],
@@ -283,7 +410,7 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: ((isDesktop ? _desktopNominalCtrl.text.isEmpty : _nominal.isEmpty) || _loading) ? null : _simpan,
+                      onPressed: (_totalSemua <= 0 || _loading) ? null : _simpan,
                       style: ElevatedButton.styleFrom(
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                       ),

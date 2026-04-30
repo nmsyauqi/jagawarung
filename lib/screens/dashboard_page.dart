@@ -6,6 +6,9 @@ import 'package:provider/provider.dart';
 import '../providers/shift_provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/transaksi_model.dart';
+import '../models/produk_model.dart';
+import '../services/database_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'tambah_transaksi_page.dart';
 import 'tutup_shift_page.dart';
 
@@ -17,6 +20,8 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  final DatabaseService _dbService = DatabaseService();
+
   void _refresh() => setState(() {});
 
   Future<void> _keTambahTransaksi() async {
@@ -73,6 +78,14 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            onPressed: () => _showKatalogDialog(s.idWarung, p_isPemilik),
+            icon: const Icon(Icons.inventory_2_outlined, color: AppTheme.textDark),
+            tooltip: 'Katalog Barang',
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
@@ -303,6 +316,128 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
           Text('+${Fmt.uang(tx.nominal.toDouble())}', style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.accent)),
+        ],
+      ),
+    );
+  }
+  // --- FITUR KATALOG PRODUK KASIR ---
+  void _showKatalogDialog(String idWarung, bool isPemilik) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.85,
+          decoration: const BoxDecoration(
+            color: AppTheme.surfaceElevated,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              Container(margin: const EdgeInsets.symmetric(vertical: 12), width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Daftar Barang', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
+                    ElevatedButton.icon(
+                      onPressed: () => _showFormProduk(idWarung, null),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Barang Baru'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(),
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: _dbService.streamProduk(idWarung),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                    if (snapshot.data!.docs.isEmpty) {
+                      return Center(child: Text('Belum ada barang di sistem.', style: GoogleFonts.inter(color: AppTheme.textMuted)));
+                    }
+                    
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: snapshot.data!.docs.length,
+                      itemBuilder: (context, index) {
+                        var produk = ProdukModel.fromMap(snapshot.data!.docs[index].data() as Map<String, dynamic>);
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
+                          child: ListTile(
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(color: AppTheme.surfaceDim, borderRadius: BorderRadius.circular(8)),
+                              child: const Icon(Icons.fastfood_rounded, color: AppTheme.primary),
+                            ),
+                            title: Text(produk.namaProduk, style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                            subtitle: Text(Fmt.uang(produk.harga.toDouble()), style: GoogleFonts.inter(color: AppTheme.textMuted, fontSize: 13)),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(icon: const Icon(Icons.edit_outlined, color: AppTheme.primary), onPressed: () => _showFormProduk(idWarung, produk)),
+                                if (isPemilik)
+                                  IconButton(icon: const Icon(Icons.delete_outline, color: AppTheme.danger), onPressed: () => _dbService.hapusProduk(produk.idProduk)),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showFormProduk(String idWarung, ProdukModel? produkLama) {
+    final namaCtrl = TextEditingController(text: produkLama?.namaProduk);
+    final hargaCtrl = TextEditingController(text: produkLama?.harga.toString());
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(produkLama == null ? 'Tambah Barang' : 'Edit Barang'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: namaCtrl, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'Nama Produk')),
+            TextField(controller: hargaCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Harga Satuan (Rp)')),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white),
+            onPressed: () async {
+              if (namaCtrl.text.isEmpty || hargaCtrl.text.isEmpty) return;
+              if (produkLama == null) {
+                await _dbService.tambahProduk(ProdukModel(
+                  idProduk: "PROD-${DateTime.now().millisecondsSinceEpoch}",
+                  idWarung: idWarung,
+                  namaProduk: namaCtrl.text,
+                  harga: int.parse(hargaCtrl.text),
+                ));
+              } else {
+                await _dbService.editProduk(produkLama.idProduk, namaCtrl.text, int.parse(hargaCtrl.text));
+              }
+              if (ctx.mounted) Navigator.pop(ctx);
+            }, 
+            child: const Text('Simpan')
+          ),
         ],
       ),
     );
