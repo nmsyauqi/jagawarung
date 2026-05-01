@@ -145,6 +145,16 @@ class DatabaseService {
         .snapshots();
   }
 
+  Future<bool> hapusShift(String idShift) async {
+    try {
+      await _db.collection('shifts').doc(idShift).delete();
+      return true;
+    } catch (e) {
+      debugPrint("❌ Error hapus shift: $e");
+      return false;
+    }
+  }
+
   Stream<QuerySnapshot> streamPegawai(String idWarung) {
     return _db.collection('users')
         .where('id_warung', isEqualTo: idWarung)

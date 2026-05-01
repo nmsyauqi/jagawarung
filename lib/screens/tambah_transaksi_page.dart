@@ -20,14 +20,15 @@ class TambahTransaksiPage extends StatefulWidget {
 class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
   String _nominal = '';
   final _catatanCtrl = TextEditingController();
-  final _desktopNominalCtrl = TextEditingController(); // Khusus form input Desktop
+  final _desktopNominalCtrl =
+      TextEditingController(); // Khusus form input Desktop
   bool _loading = false;
   bool _showNotes = false;
-  
+
   // -- Keranjang Hybrid --
-  final Map<String, int> _keranjangCount = {}; 
-  final Map<String, ProdukModel> _keranjangProduk = {}; 
-  
+  final Map<String, int> _keranjangCount = {};
+  final Map<String, ProdukModel> _keranjangProduk = {};
+
   // Riwayat transaksi khusus selama membuka halaman ini
   final List<TransaksiModel> _riwayatSesiIni = [];
 
@@ -41,7 +42,8 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
   void _pressKey(String val) {
     setState(() {
       if (val == 'del') {
-        if (_nominal.isNotEmpty) _nominal = _nominal.substring(0, _nominal.length - 1);
+        if (_nominal.isNotEmpty)
+          _nominal = _nominal.substring(0, _nominal.length - 1);
       } else if (val == '000') {
         if (_nominal.isNotEmpty && _nominal.length <= 10) _nominal += '000';
       } else {
@@ -66,8 +68,14 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
 
   int get _totalManual {
     final tPlatform = Theme.of(context).platform;
-    final isDesktop = tPlatform == TargetPlatform.windows || tPlatform == TargetPlatform.macOS || tPlatform == TargetPlatform.linux || MediaQuery.of(context).size.width > 600;
-    final valStr = isDesktop ? _desktopNominalCtrl.text.replaceAll('.', '') : _nominal;
+    final isDesktop =
+        tPlatform == TargetPlatform.windows ||
+        tPlatform == TargetPlatform.macOS ||
+        tPlatform == TargetPlatform.linux ||
+        MediaQuery.of(context).size.width > 600;
+    final valStr = isDesktop
+        ? _desktopNominalCtrl.text.replaceAll('.', '')
+        : _nominal;
     return int.tryParse(valStr) ?? 0;
   }
 
@@ -107,9 +115,11 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
       rincian.add("${p.namaProduk} (x$qty)");
     });
     if (_totalManual > 0) {
-      rincian.add("Manual: ${NumberFormat('#,###', 'id_ID').format(_totalManual)}");
+      rincian.add(
+        "Manual: ${NumberFormat('#,###', 'id_ID').format(_totalManual)}",
+      );
     }
-    
+
     final customNote = _catatanCtrl.text.trim();
     String noteFinal = rincian.join(', ');
     if (customNote.isNotEmpty) {
@@ -119,7 +129,11 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
     final idTx = 'TX_${DateTime.now().millisecondsSinceEpoch}';
 
     // TRIGGER KE BACKEND
-    context.read<ShiftProvider>().tambahTransaksi(idTx, total, note: noteFinal.isEmpty ? null : noteFinal);
+    context.read<ShiftProvider>().tambahTransaksi(
+      idTx,
+      total,
+      note: noteFinal.isEmpty ? null : noteFinal,
+    );
 
     final trxLocal = TransaksiModel(
       idTransaksi: idTx,
@@ -129,9 +143,9 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
       note: noteFinal.isEmpty ? null : noteFinal,
       waktuTransaksi: DateTime.now(),
     );
-    
+
     if (!mounted) return;
-    
+
     // Simpan ke riwayat sesi ini agar kasir bisa lihat, lalu reset input
     setState(() {
       _riwayatSesiIni.insert(0, trxLocal); // Masukkan di urutan teratas
@@ -143,14 +157,18 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
       _showNotes = false;
       _loading = false;
     });
-    
+
     // Auto Hilangkan System Keyboard setelah klik Simpan!
     FocusManager.instance.primaryFocus?.unfocus();
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Transaksi tersimpan!'), duration: Duration(seconds: 1), behavior: SnackBarBehavior.floating),
+      const SnackBar(
+        content: Text('Transaksi tersimpan!'),
+        duration: Duration(seconds: 1),
+        behavior: SnackBarBehavior.floating,
+      ),
     );
-    
+
     // Kita TIDAK LAGI melakukan Navigator.pop() di sini!
     // Layar akan menetap agar hasil riwayat tampil bergulir ke atas seperti kalkulator pita kasir.
   }
@@ -158,7 +176,11 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
   @override
   Widget build(BuildContext context) {
     final tPlatform = Theme.of(context).platform;
-    final isDesktop = tPlatform == TargetPlatform.windows || tPlatform == TargetPlatform.macOS || tPlatform == TargetPlatform.linux || MediaQuery.of(context).size.width > 600;
+    final isDesktop =
+        tPlatform == TargetPlatform.windows ||
+        tPlatform == TargetPlatform.macOS ||
+        tPlatform == TargetPlatform.linux ||
+        MediaQuery.of(context).size.width > 600;
     final keyboardTerbuka = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Scaffold(
@@ -171,28 +193,41 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
         children: [
           // --- KATALOG BAR ---
           StreamBuilder<QuerySnapshot>(
-            stream: DatabaseService().streamProduk(context.read<ShiftProvider>().activeShift!.idWarung),
+            stream: DatabaseService().streamProduk(
+              context.read<ShiftProvider>().activeShift!.idWarung,
+            ),
             builder: (context, snapshot) {
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const SizedBox.shrink();
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
+                return const SizedBox.shrink();
               return Container(
                 height: 60,
                 color: Colors.white,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   itemCount: snapshot.data!.docs.length,
                   itemBuilder: (ctx, i) {
-                    final p = ProdukModel.fromMap(snapshot.data!.docs[i].data() as Map<String, dynamic>);
+                    final p = ProdukModel.fromMap(
+                      snapshot.data!.docs[i].data() as Map<String, dynamic>,
+                    );
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ElevatedButton.icon(
-                        icon: const Icon(Icons.add_shopping_cart_rounded, size: 16),
+                        icon: const Icon(
+                          Icons.add_shopping_cart_rounded,
+                          size: 16,
+                        ),
                         label: Text(p.namaProduk),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.surfaceDim,
                           foregroundColor: AppTheme.textDark,
                           elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         onPressed: () => _tambahKeKeranjang(p),
                       ),
@@ -205,199 +240,320 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
 
           // ── Display Nominal & Riwayat Sesi ──
           Expanded(
-            child: SingleChildScrollView( // Kunci anti-overflow (Garis kuning)
+            child: SingleChildScrollView(
+              // Kunci anti-overflow (Garis kuning)
               reverse: true,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 alignment: Alignment.bottomRight,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                     // List Riwayat Input (Scrollable)
-                     if (_riwayatSesiIni.isNotEmpty)
-                       ListView.builder(
-                         shrinkWrap: true,
-                         physics: const NeverScrollableScrollPhysics(),
-                         reverse: true, // Item terbaru di bawah
-                         itemCount: _riwayatSesiIni.length,
-                         itemBuilder: (ctx, i) {
-                           final t = _riwayatSesiIni[i];
-                           return Padding(
-                             padding: const EdgeInsets.only(bottom: 12),
-                             child: Row(
-                               mainAxisAlignment: MainAxisAlignment.end,
-                               children: [
-                                 Text(t.note ?? 'Input', style: GoogleFonts.inter(fontSize: 14, color: AppTheme.textMuted)),
-                                 const SizedBox(width: 16),
-                                 Text('+ ${NumberFormat('#,###', 'id_ID').format(t.nominal)}', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w600, color: AppTheme.textBody)),
-                                 const SizedBox(width: 8),
-                                 const Icon(Icons.check_circle_rounded, color: AppTheme.success, size: 16),
-                               ],
-                             ),
-                           );
-                         },
-                       )
-                     else
-                       const SizedBox(height: 100),
-                       
+                    // List Riwayat Input (Scrollable)
+                    if (_riwayatSesiIni.isNotEmpty)
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        reverse: true, // Item terbaru di bawah
+                        itemCount: _riwayatSesiIni.length,
+                        itemBuilder: (ctx, i) {
+                          final t = _riwayatSesiIni[i];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    t.note ?? 'Input',
+                                    textAlign: TextAlign.right,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 14,
+                                      color: AppTheme.textMuted,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Text(
+                                  '+ ${NumberFormat('#,###', 'id_ID').format(t.nominal)}',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textBody,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Icon(
+                                  Icons.check_circle_rounded,
+                                  color: AppTheme.success,
+                                  size: 16,
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      )
+                    else
+                      const SizedBox(height: 100),
+
                     const Divider(),
                     const SizedBox(height: 8),
-                  
-                  // --- KERANJANG (HYBRID) ---
-                  if (_keranjangCount.isNotEmpty)
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: AppTheme.primarySoft.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text('Isi Keranjang:', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.primary)),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8, runSpacing: 8,
-                            alignment: WrapAlignment.end,
-                            children: _keranjangCount.keys.map((id) {
-                              final p = _keranjangProduk[id]!;
-                              final qty = _keranjangCount[id]!;
-                              return InputChip(
-                                label: Text("${p.namaProduk} (x$qty)"),
-                                onDeleted: () => _kurangiDariKeranjang(id),
-                                deleteIconColor: AppTheme.danger,
-                                backgroundColor: Colors.white,
-                                labelStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
-                              );
-                            }).toList(),
-                          ),
-                        ],
-                      ),
-                    ),
 
-                  // Input Utama (Responsive: TextField jika Desktop, Custom Text jika Mobile)
-                  if (isDesktop)
-                    TextField(
-                      controller: _desktopNominalCtrl,
-                      keyboardType: TextInputType.number,
-                      autofocus: true,
-                      textAlign: TextAlign.right,
-                      style: GoogleFonts.plusJakartaSans(fontSize: 48, fontWeight: FontWeight.w800, color: AppTheme.textDark),
-                      decoration: InputDecoration(
-                        prefixText: 'Rp  ',
-                        prefixStyle: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w600, color: AppTheme.textMuted),
-                        hintText: '0',
-                        hintStyle: GoogleFonts.plusJakartaSans(fontSize: 48, fontWeight: FontWeight.w800, color: AppTheme.border),
-                        border: InputBorder.none,
-                      ),
-                      onChanged: (val) {
-                        final raw = val.replaceAll('.', '');
-                        final n = int.tryParse(raw);
-                        if (n != null) {
-                          final fmt = NumberFormat('#,###', 'id_ID').format(n);
-                          _desktopNominalCtrl.value = TextEditingValue(text: fmt, selection: TextSelection.collapsed(offset: fmt.length));
-                        }
-                        setState(() {}); // Paksa refresh tombol Simpan Transaksi agar nyala!
-                      },
-                    )
-                  else
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: AppTheme.primary, width: 2),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text('Rp ', style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w600, color: AppTheme.textMuted)),
-                          Expanded(
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              reverse: true,
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(NumberFormat('#,###', 'id_ID').format(_totalSemua), style: GoogleFonts.plusJakartaSans(fontSize: 48, fontWeight: FontWeight.w800, color: AppTheme.textDark)),
-                                  if (_keranjangCount.isNotEmpty && _totalManual > 0)
-                                    Text('Barang: Rp ${NumberFormat('#,###', 'id_ID').format(_totalKeranjang)} + Manual: Rp ${NumberFormat('#,###', 'id_ID').format(_totalManual)}', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textMuted)),
-                                ],
+                    // --- KERANJANG (HYBRID) ---
+                    if (_keranjangCount.isNotEmpty)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primarySoft.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'Isi Keranjang:',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primary,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    
-                  const SizedBox(height: 12),
-                  if (_showNotes)
-                    TextField(
-                      controller: _catatanCtrl,
-                      autofocus: true,
-                      style: GoogleFonts.inter(fontSize: 15),
-                      decoration: InputDecoration(
-                        hintText: 'Tambahkan catatan opsional...',
-                        fillColor: Colors.white,
-                        filled: true,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[300]!)),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.primary)),
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.close_rounded, size: 20),
-                          onPressed: () {
-                            _catatanCtrl.clear();
-                            setState(() => _showNotes = false);
-                            FocusManager.instance.primaryFocus?.unfocus(); // Auto hide keyboard saat disilang
-                          },
-                        ),
-                      ),
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) {
-                        FocusManager.instance.primaryFocus?.unfocus();
-                        if (_nominal.isNotEmpty) _simpan(); // Bisa lgsg simpan bila pencet tombol Done/Enter di keyboard
-                      },
-                    )
-                  else
-                    InkWell(
-                      onTap: () => setState(() => _showNotes = true),
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.surface,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppTheme.border),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.edit_note_rounded, size: 16, color: AppTheme.accent),
-                            const SizedBox(width: 6),
-                            Text('Catatan', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.accent)),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              alignment: WrapAlignment.end,
+                              children: _keranjangCount.keys.map((id) {
+                                final p = _keranjangProduk[id]!;
+                                final qty = _keranjangCount[id]!;
+                                return InputChip(
+                                  label: Text("${p.namaProduk} (x$qty)"),
+                                  onDeleted: () => _kurangiDariKeranjang(id),
+                                  deleteIconColor: AppTheme.danger,
+                                  backgroundColor: Colors.white,
+                                  labelStyle: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                );
+                              }).toList(),
+                            ),
                           ],
                         ),
                       ),
-                    ),
-                ],
+
+                    // Input Utama (Responsive: TextField jika Desktop, Custom Text jika Mobile)
+                    if (isDesktop)
+                      TextField(
+                        controller: _desktopNominalCtrl,
+                        keyboardType: TextInputType.number,
+                        autofocus: true,
+                        textAlign: TextAlign.right,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 48,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.textDark,
+                        ),
+                        decoration: InputDecoration(
+                          prefixText: 'Rp  ',
+                          prefixStyle: GoogleFonts.inter(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textMuted,
+                          ),
+                          hintText: '0',
+                          hintStyle: GoogleFonts.plusJakartaSans(
+                            fontSize: 48,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.border,
+                          ),
+                          border: InputBorder.none,
+                        ),
+                        onChanged: (val) {
+                          final raw = val.replaceAll('.', '');
+                          final n = int.tryParse(raw);
+                          if (n != null) {
+                            final fmt = NumberFormat(
+                              '#,###',
+                              'id_ID',
+                            ).format(n);
+                            _desktopNominalCtrl.value = TextEditingValue(
+                              text: fmt,
+                              selection: TextSelection.collapsed(
+                                offset: fmt.length,
+                              ),
+                            );
+                          }
+                          setState(
+                            () {},
+                          ); // Paksa refresh tombol Simpan Transaksi agar nyala!
+                        },
+                      )
+                    else
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 24,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: AppTheme.primary, width: 2),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(
+                              'Rp ',
+                              style: GoogleFonts.inter(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.textMuted,
+                              ),
+                            ),
+                            Expanded(
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                reverse: true,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      NumberFormat(
+                                        '#,###',
+                                        'id_ID',
+                                      ).format(_totalSemua),
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 48,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppTheme.textDark,
+                                      ),
+                                    ),
+                                    if (_keranjangCount.isNotEmpty &&
+                                        _totalManual > 0)
+                                      Text(
+                                        'Barang: Rp ${NumberFormat('#,###', 'id_ID').format(_totalKeranjang)} + Manual: Rp ${NumberFormat('#,###', 'id_ID').format(_totalManual)}',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          color: AppTheme.textMuted,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    const SizedBox(height: 12),
+                    if (_showNotes)
+                      TextField(
+                        controller: _catatanCtrl,
+                        autofocus: true,
+                        style: GoogleFonts.inter(fontSize: 15),
+                        decoration: InputDecoration(
+                          hintText: 'Tambahkan catatan opsional...',
+                          fillColor: Colors.white,
+                          filled: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey[300]!),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: AppTheme.primary),
+                          ),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.close_rounded, size: 20),
+                            onPressed: () {
+                              _catatanCtrl.clear();
+                              setState(() => _showNotes = false);
+                              FocusManager.instance.primaryFocus
+                                  ?.unfocus(); // Auto hide keyboard saat disilang
+                            },
+                          ),
+                        ),
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) {
+                          FocusManager.instance.primaryFocus?.unfocus();
+                          if (_nominal.isNotEmpty)
+                            _simpan(); // Bisa lgsg simpan bila pencet tombol Done/Enter di keyboard
+                        },
+                      )
+                    else
+                      InkWell(
+                        onTap: () => setState(() => _showNotes = true),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: AppTheme.border),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.edit_note_rounded,
+                                size: 16,
+                                color: AppTheme.accent,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Catatan',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.accent,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
-          )),
-          
+          ),
+
           // ── Numpad UI ──
           Container(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
             decoration: BoxDecoration(
               color: AppTheme.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, -4))],
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, -4),
+                ),
+              ],
             ),
             child: SafeArea(
               child: Column(
                 children: [
-                   // Sembunyikan Grid Angka di Layar Desktop (Laptop) atau saat System Keyboard terbuka
+                  // Sembunyikan Grid Angka di Layar Desktop (Laptop) atau saat System Keyboard terbuka
                   if (!keyboardTerbuka && !isDesktop) ...[
                     Row(children: [_btn('1'), _btn('2'), _btn('3')]),
                     Row(children: [_btn('4'), _btn('5'), _btn('6')]),
@@ -410,20 +566,40 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: (_totalSemua <= 0 || _loading) ? null : _simpan,
+                      onPressed: (_totalSemua <= 0 || _loading)
+                          ? null
+                          : _simpan,
                       style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                       ),
-                      child: _loading 
-                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.check_circle_outline_rounded, size: 24),
-                              const SizedBox(width: 8),
-                              Text('Simpan Transaksi', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w700)),
-                            ],
-                          ),
+                      child: _loading
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 3,
+                              ),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.check_circle_outline_rounded,
+                                  size: 24,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Simpan Transaksi',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
                     ),
                   ),
                 ],
@@ -450,8 +626,19 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
               height: 58, // Lebih normal sizenya
               alignment: Alignment.center,
               child: label == 'del'
-                  ? const Icon(Icons.backspace_rounded, color: AppTheme.danger, size: 24)
-                  : Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
+                  ? const Icon(
+                      Icons.backspace_rounded,
+                      color: AppTheme.danger,
+                      size: 24,
+                    )
+                  : Text(
+                      label,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textDark,
+                      ),
+                    ),
             ),
           ),
         ),

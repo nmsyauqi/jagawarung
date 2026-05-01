@@ -54,13 +54,16 @@ class _DashboardPageState extends State<DashboardPage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        backgroundColor: AppTheme.surface,
+        foregroundColor: AppTheme.textDark,
+        elevation: 0,
         title: Row(
           children: [
             Container(
               width: 42, height: 42,
               decoration: BoxDecoration(
-                color: const Color(0xFF6B7280), // Warna abu-abu gelap khas Guest Account
-                borderRadius: BorderRadius.circular(8), // Sudut agak tegas (square-ish)
+                color: const Color(0xFF6B7280),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: const Center(
                 child: Icon(Icons.person_outline_rounded, color: Colors.white, size: 28),
@@ -424,15 +427,18 @@ class _DashboardPageState extends State<DashboardPage> {
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white),
             onPressed: () async {
               if (namaCtrl.text.isEmpty || hargaCtrl.text.isEmpty) return;
+              // Bersihkan karakter non-angka (titik, koma) sebelum diparse
+              final hargaBersih = int.tryParse(hargaCtrl.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+              
               if (produkLama == null) {
                 await _dbService.tambahProduk(ProdukModel(
                   idProduk: "PROD-${DateTime.now().millisecondsSinceEpoch}",
                   idWarung: idWarung,
                   namaProduk: namaCtrl.text,
-                  harga: int.parse(hargaCtrl.text),
+                  harga: hargaBersih,
                 ));
               } else {
-                await _dbService.editProduk(produkLama.idProduk, namaCtrl.text, int.parse(hargaCtrl.text));
+                await _dbService.editProduk(produkLama.idProduk, namaCtrl.text, hargaBersih);
               }
               if (ctx.mounted) Navigator.pop(ctx);
             }, 

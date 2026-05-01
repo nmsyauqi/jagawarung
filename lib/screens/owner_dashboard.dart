@@ -15,6 +15,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'dart:typed_data';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart';
 
 class OwnerDashboard extends StatefulWidget {
   const OwnerDashboard({super.key});
@@ -35,18 +36,20 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     return Scaffold(
       backgroundColor: AppTheme.bg,
       appBar: AppBar(
+        backgroundColor: AppTheme.primary,
+        elevation: 0,
         centerTitle: false,
         titleSpacing: 24,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Manajemen Toko', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
-            Text('Akses Pemilik', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textMuted)),
+            Text('Manajemen Toko', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white)),
+            Text('Akses Pemilik', style: GoogleFonts.inter(fontSize: 12, color: Colors.white70)),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout_rounded, color: AppTheme.danger),
+            icon: const Icon(Icons.logout_rounded, color: Colors.white),
             tooltip: 'Keluar',
             onPressed: () => context.read<AuthProvider>().logout(),
           ),
@@ -100,44 +103,117 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         }
 
         return ListView(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.zero,
           children: [
-            Text('Omzet Kasir Aktif', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [AppTheme.primary, AppTheme.primarySoft]),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Total Uang Masuk', style: GoogleFonts.inter(fontSize: 14, color: Colors.white70)),
-                  Text('Rp $totalHariIni', style: GoogleFonts.plusJakartaSans(fontSize: 32, fontWeight: FontWeight.w800, color: Colors.white)),
-                  const Divider(color: Colors.white24, height: 32),
-                  Row(
+            // ── Header Gradien ala Byond ──
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  height: 220,
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppTheme.primary, Color(0xFF14B8A6)], // Mix Blue to Teal
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(child: _miniStat('Transaksi', '${transaksis.length}x')),
-                      Expanded(child: _miniStat('Status', 'Aktif')),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
+                            child: const Icon(Icons.storefront_rounded, color: Colors.white, size: 28),
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('JagaWarung', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
+                              Text('Point of Sales System', style: GoogleFonts.inter(fontSize: 12, color: Colors.white70)),
+                            ],
+                          ),
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
+                ),
+                
+                // ── Kartu Omzet Mengapung ──
+                Positioned(
+                  top: 90,
+                  left: 20,
+                  right: 20,
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white, // Kartu Putih Default
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, 10)),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(color: AppTheme.successSurface, borderRadius: BorderRadius.circular(8)),
+                              child: const Icon(Icons.account_balance_wallet_rounded, color: AppTheme.success, size: 20),
+                            ),
+                            const SizedBox(width: 8),
+                            Text('Omzet Kasir Hari Ini', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textMuted)),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Text('Rp ${NumberFormat('#,###', 'id_ID').format(totalHariIni)}', style: GoogleFonts.plusJakartaSans(fontSize: 32, fontWeight: FontWeight.w800, color: AppTheme.textDark)),
+                        const Divider(height: 32, color: AppTheme.borderLight, thickness: 1.5),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(child: _miniStatHitam('Total Transaksi', '${transaksis.length}x', Icons.receipt_long_rounded)),
+                            Container(width: 1.5, height: 40, color: AppTheme.borderLight),
+                            Expanded(child: _miniStatHitam('Status Mesin', 'Berjalan', Icons.sensors_rounded)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 32),
-            _buildKatalogProduk(idWarung),
+            
+            // Memberi Jarak Karena Kartu Mengapung
+            const SizedBox(height: 90),
+            
+            // Konten Bawah
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: _buildKatalogProduk(idWarung),
+            ),
+            const SizedBox(height: 100),
           ],
         );
       }
     );
   }
 
-  Widget _miniStat(String label, String val) {
+  Widget _miniStatHitam(String label, String val, IconData icon) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(val, style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.accentLight)),
-        Text(label, style: GoogleFonts.inter(fontSize: 12, color: Colors.white70)),
+        Icon(icon, color: AppTheme.primary, size: 20),
+        const SizedBox(height: 4),
+        Text(val, style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textDark)),
+        Text(label, style: GoogleFonts.inter(fontSize: 11, color: AppTheme.textMuted)),
       ],
     );
   }
@@ -225,11 +301,14 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
           ElevatedButton(onPressed: () async {
             if (namaCtrl.text.isEmpty || hargaCtrl.text.isEmpty) return;
+            // Bersihkan titik atau koma
+            final hargaBersih = int.tryParse(hargaCtrl.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+            
             ProdukModel produkBaru = ProdukModel(
               idProduk: "PROD-${DateTime.now().millisecondsSinceEpoch}",
               idWarung: idWarung,
               namaProduk: namaCtrl.text,
-              harga: int.parse(hargaCtrl.text),
+              harga: hargaBersih,
             );
             await _dbService.tambahProduk(produkBaru);
             if (ctx.mounted) Navigator.pop(ctx);
@@ -257,7 +336,9 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
           ElevatedButton(onPressed: () async {
             if (namaCtrl.text.isEmpty || hargaCtrl.text.isEmpty) return;
-            await _dbService.editProduk(produk.idProduk, namaCtrl.text, int.parse(hargaCtrl.text));
+            final hargaBersih = int.tryParse(hargaCtrl.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+            
+            await _dbService.editProduk(produk.idProduk, namaCtrl.text, hargaBersih);
             if (ctx.mounted) Navigator.pop(ctx);
           }, child: const Text('Simpan')),
         ],
@@ -378,7 +459,38 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                     ],
                   ),
                 ),
-                Text("Kasir: ${shift.namaPengguna}", style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13, color: AppTheme.textDark)),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text("Kasir: ${shift.namaPengguna}", style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13, color: AppTheme.textDark)),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 20),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Hapus History Shift?'),
+                            content: const Text('Tindakan ini akan menghapus catatan shift ini secara permanen. Lanjutkan?'),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger, foregroundColor: Colors.white),
+                                onPressed: () async {
+                                  await _dbService.hapusShift(shift.idShift);
+                                  if (ctx.mounted) Navigator.pop(ctx);
+                                },
+                                child: const Text('Hapus'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -606,28 +718,39 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         return ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            const Center(child: Icon(Icons.storefront_rounded, size: 80, color: AppTheme.primarySoft)),
+            // Avatar Profil
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.storefront_rounded, size: 64, color: AppTheme.primary),
+              ),
+            ),
             const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Identitas Toko', style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.bold)),
+                Text('Identitas Toko', style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
                 const SizedBox(width: 12),
                 IconButton(
                   onPressed: () => _showUbahProfilToko(owner, namaWarung),
                   icon: const Icon(Icons.edit_rounded, color: AppTheme.primary),
-                  tooltip: 'Ubah Profil',
+                  tooltip: 'Ubah Profil & Keamanan',
                   style: IconButton.styleFrom(backgroundColor: AppTheme.primarySoft.withValues(alpha: 0.1)),
                 ),
               ],
             ),
             const SizedBox(height: 40),
+            
             _infoRow(Icons.store, 'Nama Warung', namaWarung),
-            const Divider(height: 32),
+            const Divider(height: 32, color: AppTheme.borderLight),
             _infoRow(Icons.badge, 'ID Warung (Username)', owner.idWarung),
-            const Divider(height: 32),
+            const Divider(height: 32, color: AppTheme.borderLight),
             _infoRow(Icons.person, 'Nama Pemilik', owner.nama),
-            // Baris PIN dihapus untuk keamanan layar
+            // Baris PIN dihilangkan dari tampilan depan agar aman, tetapi bisa diubah melalui tombol edit
           ],
         );
       }
