@@ -47,6 +47,20 @@ class DatabaseService {
 
   // --- FUNGSI AUTENTIKASI & REGISTRASI ---
   
+  Future<bool> koreksiKasirBermasalah(String idShift, int saldoAkhirFisik, int selisihKas) async {
+    try {
+      await _db.collection('shifts').doc(idShift).update({
+        'saldo_akhir': saldoAkhirFisik,
+        'selisih_kas': selisihKas,
+        'is_force_closed': false, // Selesaikan masalahnya
+      });
+      return true;
+    } catch (e) {
+      debugPrint("❌ Error koreksi shift: $e");
+      return false;
+    }
+  }
+  
   Future<UserModel?> loginUser(String idWarung, String pin) async {
     try {
       final querySnapshot = await _db

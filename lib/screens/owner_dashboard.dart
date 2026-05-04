@@ -40,18 +40,28 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         elevation: 0,
         centerTitle: false,
         titleSpacing: 24,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        title: Row(
           children: [
-            Text('Manajemen Toko', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white)),
-            Text('Akses Pemilik', style: GoogleFonts.inter(fontSize: 12, color: Colors.white70)),
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
+              child: const Icon(Icons.storefront_rounded, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('JagaWarung', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white)),
+                Text('Point of Sales System', style: GoogleFonts.inter(fontSize: 12, color: Colors.white70)),
+              ],
+            ),
           ],
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout_rounded, color: Colors.white),
             tooltip: 'Keluar',
-            onPressed: () => context.read<AuthProvider>().logout(),
+            onPressed: _showLogoutDialog,
           ),
           const SizedBox(width: 8),
         ],
@@ -126,17 +136,11 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                     children: [
                       Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
-                            child: const Icon(Icons.storefront_rounded, color: Colors.white, size: 28),
-                          ),
-                          const SizedBox(width: 12),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('JagaWarung', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
-                              Text('Point of Sales System', style: GoogleFonts.inter(fontSize: 12, color: Colors.white70)),
+                              Text('Manajemen Toko', style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
+                              Text('Akses Pemilik', style: GoogleFonts.inter(fontSize: 12, color: Colors.white70)),
                             ],
                           ),
                         ],
@@ -464,6 +468,16 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                   children: [
                     Text("Kasir: ${shift.namaPengguna}", style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13, color: AppTheme.textDark)),
                     const SizedBox(width: 8),
+                    if (shift.isForceClosed) ...[
+                      IconButton(
+                        icon: const Icon(Icons.edit_rounded, color: AppTheme.primary, size: 20),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        tooltip: 'Koreksi Data Laci',
+                        onPressed: () => _showKoreksiKasirDialog(shift),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
                     IconButton(
                       icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 20),
                       padding: EdgeInsets.zero,
@@ -780,6 +794,90 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   }
 
   // --- Dialog Helper Tetap Di Bawah Sini ---
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Konfirmasi Keluar'),
+        content: const Text('Apakah Anda yakin ingin logout dari aplikasi?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.read<AuthProvider>().logout();
+            },
+            child: const Text('Ya, Logout', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showKoreksiKasirDialog(ShiftModel shift) {
+    final saldoSistem = shift.saldoAwal + (shift.totalUangMasuk ?? 0);
+    final inputCtrl = TextEditingController();
+    bool loading = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return AlertDialog(
+            title: const Text('Koreksi Pendapatan'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Uang Sistem Seharusnya: Rp ${NumberFormat('#,###', 'id_ID').format(saldoSistem)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                const Text('Masukkan jumlah uang fisik di laci yang sebenarnya:'),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: inputCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: 'Cth: ${saldoSistem}',
+                    hintStyle: TextStyle(color: Colors.grey.shade400),
+                    labelText: 'Total Uang Fisik',
+                    labelStyle: TextStyle(color: Colors.grey.shade500),
+                    prefixText: 'Rp ',
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: loading ? null : () => Navigator.pop(ctx), child: const Text('Batal')),
+              ElevatedButton(
+                onPressed: loading ? null : () async {
+                  if (inputCtrl.text.isEmpty) return;
+                  int uangFisik = int.tryParse(inputCtrl.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+                  int selisih = uangFisik - saldoSistem;
+                  
+                  setModalState(() => loading = true);
+                  bool sukses = await _dbService.koreksiKasirBermasalah(shift.idShift, uangFisik, selisih);
+                  
+                  if (sukses && mounted) {
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Shift berhasil dikoreksi')));
+                  } else {
+                    setModalState(() => loading = false);
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal mengoreksi')));
+                  }
+                },
+                child: loading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Simpan Koreksi'),
+              ),
+            ],
+          );
+        }
+      ),
+    );
+  }
+
   void _showUbahPinDialog(String idUser, String nama) {
     final ctrl = TextEditingController();
     showDialog(
@@ -842,8 +940,8 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: namaCtrl, decoration: const InputDecoration(labelText: 'Nama Lengkap')),
-            TextField(controller: pinCtrl, decoration: const InputDecoration(labelText: 'PIN Akses'), keyboardType: TextInputType.number, maxLength: 6),
+            TextField(controller: namaCtrl, decoration: InputDecoration(labelText: 'Nama Lengkap', labelStyle: TextStyle(color: Colors.grey.shade500))),
+            TextField(controller: pinCtrl, decoration: InputDecoration(labelText: 'PIN Akses', labelStyle: TextStyle(color: Colors.grey.shade500)), keyboardType: TextInputType.number, maxLength: 6),
           ],
         ),
         actions: [
@@ -878,11 +976,11 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextField(controller: namaWarungCtrl, decoration: const InputDecoration(labelText: 'Nama Warung')),
+                  TextField(controller: namaWarungCtrl, decoration: InputDecoration(labelText: 'Nama Warung', labelStyle: TextStyle(color: Colors.grey.shade500))),
                   const SizedBox(height: 12),
-                  TextField(controller: namaOwnerCtrl, decoration: const InputDecoration(labelText: 'Nama Bos / Pemilik')),
+                  TextField(controller: namaOwnerCtrl, decoration: InputDecoration(labelText: 'Nama Bos / Pemilik', labelStyle: TextStyle(color: Colors.grey.shade500))),
                   const SizedBox(height: 12),
-                  TextField(controller: pinCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'PIN Akses Bos'), maxLength: 6),
+                  TextField(controller: pinCtrl, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: 'PIN Akses Bos', labelStyle: TextStyle(color: Colors.grey.shade500)), maxLength: 6),
                 ],
               ),
             ),

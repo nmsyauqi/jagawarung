@@ -1,5 +1,6 @@
 // lib/providers/auth_provider.dart
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import '../services/database_service.dart';
 
@@ -27,6 +28,12 @@ class AuthProvider with ChangeNotifier {
 
     if (user != null) {
       _currentUser = user; 
+      
+      // Simpan sesi permanen
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('saved_id_warung', idWarung);
+      await prefs.setString('saved_pin', pin);
+      
       notifyListeners(); 
       return true; 
     } else {
@@ -35,8 +42,31 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  void logout() {
+  Future<bool> autoLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!prefs.containsKey('saved_id_warung') || !prefs.containsKey('saved_pin')) {
+      return false;
+    }
+    
+    String idWarung = prefs.getString('saved_id_warung')!;
+    String pin = prefs.getString('saved_pin')!;
+    
+    // Login otomatis
+    final user = await _dbService.loginUser(idWarung, pin);
+    if (user != null) {
+      _currentUser = user;
+      notifyListeners();
+      return true;
+    } else {
+      await prefs.clear();
+      return false;
+    }
+  }
+
+  Future<void> logout() async {
     _currentUser = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
     notifyListeners(); 
   }
 

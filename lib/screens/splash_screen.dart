@@ -1,7 +1,9 @@
 // lib/screens/splash_screen.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
+import '../providers/auth_provider.dart';
 import '../main.dart'; // Memanggil rute WrapperScreen
 
 class SplashScreen extends StatefulWidget {
@@ -35,17 +37,22 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     _animController.forward();
 
     // 2. Timer penahanan total (3 Detik) sebelum pindah ke Halaman Login/Dashboard
-    Future.delayed(const Duration(seconds: 3), () {
+    Future.delayed(const Duration(seconds: 3), () async {
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => const WrapperScreen(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            transitionDuration: const Duration(milliseconds: 600), // Pindah halaman secara memudar (fade out)
-          ),
-        );
+        // Menunggu auto login memuat memori HP
+        await context.read<AuthProvider>().autoLogin();
+        
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) => const WrapperScreen(),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              transitionDuration: const Duration(milliseconds: 600), // Pindah halaman secara memudar (fade out)
+            ),
+          );
+        }
       }
     });
   }
