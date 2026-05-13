@@ -273,7 +273,26 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger, size: 20),
-                          onPressed: () => _dbService.hapusProduk(produk.idProduk),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Hapus Produk?'),
+                                content: Text('Apakah Anda yakin ingin menghapus produk "${produk.namaProduk}"?'),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger, foregroundColor: Colors.white),
+                                    onPressed: () {
+                                      _dbService.hapusProduk(produk.idProduk);
+                                      Navigator.pop(ctx);
+                                    },
+                                    child: const Text('Hapus'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -297,8 +316,8 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: namaCtrl, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'Nama Produk (cth: Roti)')),
-            TextField(controller: hargaCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Harga (Rp)')),
+            TextField(controller: namaCtrl, textCapitalization: TextCapitalization.words, decoration: InputDecoration(labelText: 'Nama Produk (cth: Roti)', labelStyle: TextStyle(color: Colors.grey.shade500))),
+            TextField(controller: hargaCtrl, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: 'Harga (Rp)', labelStyle: TextStyle(color: Colors.grey.shade500))),
           ],
         ),
         actions: [
@@ -332,8 +351,8 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: namaCtrl, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'Nama Produk')),
-            TextField(controller: hargaCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Harga (Rp)')),
+            TextField(controller: namaCtrl, textCapitalization: TextCapitalization.words, decoration: InputDecoration(labelText: 'Nama Produk', labelStyle: TextStyle(color: Colors.grey.shade500))),
+            TextField(controller: hargaCtrl, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: 'Harga (Rp)', labelStyle: TextStyle(color: Colors.grey.shade500))),
           ],
         ),
         actions: [
