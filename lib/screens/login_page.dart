@@ -3,11 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/shift_provider.dart';
 import '../utils/app_theme.dart';
 import '../services/database_service.dart';
-
-import 'owner_dashboard.dart';
-import 'buka_shift_page.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -193,7 +191,11 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
     if (!sukses) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login gagal! Pastikan ID dan Sandi benar.')));
     } else {
-      Navigator.of(context).pop(); 
+      final authProvider = context.read<AuthProvider>();
+      if (authProvider.isPegawai) {
+        await context.read<ShiftProvider>().restoreActiveShift(authProvider.currentUser!.idUser);
+      }
+      Navigator.of(context).pop();
     }
   }
 

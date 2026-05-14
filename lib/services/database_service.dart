@@ -28,6 +28,50 @@ class DatabaseService {
     }
   }
 
+  Future<ShiftModel?> getActiveShiftByUser(String idUser) async {
+    try {
+      var querySnapshot = await _db.collection('shifts')
+          .where('id_user', isEqualTo: idUser)
+          .where('status', isEqualTo: 'active')
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        querySnapshot = await _db.collection('shifts')
+            .where('id_user', isEqualTo: idUser)
+            .where('waktu_selesai', isEqualTo: null)
+            .limit(1)
+            .get();
+      }
+
+      if (querySnapshot.docs.isEmpty) return null;
+      return ShiftModel.fromMap(querySnapshot.docs.first.data());
+    } catch (e) {
+      debugPrint("❌ Error getActiveShiftByUser: $e");
+      return null;
+    }
+  }
+
+  Future<List<TransaksiModel>> getTransaksiForShift(String idShift) async {
+    try {
+      final snapshot = await _db.collection('transaksis')
+          .where('id_shift', isEqualTo: idShift)
+          .orderBy('waktu_transaksi')
+          .get();
+
+      return snapshot.docs
+          .map((doc) => TransaksiModel.fromMap(doc.data()))
+          .toList();
+    } catch (e) {
+      debugPrint("❌ Error getTransaksiForShift: $e");
+      return [];
+    }
+  }
+
+  Stream<DocumentSnapshot<Map<String, dynamic>>> watchShift(String idShift) {
+    return _db.collection('shifts').doc(idShift).snapshots();
+  }
+
   Future<bool> tutupPaksaShift(ShiftModel shift) async {
     try {
       // Bos menutup paksa: Uang masuk sistem dianggap sebagai Kas Akhir
@@ -37,6 +81,8 @@ class DatabaseService {
         'saldo_akhir': (shift.saldoAwal + (shift.totalUangMasuk ?? 0)),
         'selisih_kas': 0, // Dianggap nol karena dipaksa cocok oleh bos
         'is_force_closed': true, // Rekam jejak bahwa ini ditutup bos
+        'status': 'force_closed',
+        'force_closed_by': 'owner',
       });
       return true;
     } catch (e) {
@@ -53,6 +99,8 @@ class DatabaseService {
         'saldo_akhir': saldoAkhirFisik,
         'selisih_kas': selisihKas,
         'is_force_closed': false, // Selesaikan masalahnya
+        'status': 'finished',
+        'force_closed_by': null,
       });
       return true;
     } catch (e) {

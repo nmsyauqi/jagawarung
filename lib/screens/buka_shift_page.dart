@@ -37,18 +37,27 @@ class _BukaShiftPageState extends State<BukaShiftPage> {
     setState(() => _loading = true);
 
     final user = context.read<AuthProvider>().currentUser;
-    if (user == null) return;
+    if (user == null) {
+      setState(() => _loading = false);
+      return;
+    }
 
-    context.read<ShiftProvider>().bukaShift(
+    final sukses = await context.read<ShiftProvider>().bukaShift(
       idShift: 'SH_${DateTime.now().millisecondsSinceEpoch}',
       idWarung: user.idWarung,
       idUser: user.idUser,
       namaPengguna: user.nama,
       saldoAwal: nominal,
     );
-    
+
     if (!mounted) return;
-    // Navigator.pushReplacement tidak diperlukan lagi, otomatis digeser WrapperScreen!
+    setState(() => _loading = false);
+
+    if (!sukses) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Shift sudah aktif. Periksa kembali akun Anda atau refresh aplikasi.'),
+      ));
+    }
   }
 
   @override
@@ -77,6 +86,7 @@ class _BukaShiftPageState extends State<BukaShiftPage> {
         actions: [
           TextButton.icon(
             onPressed: () {
+              context.read<ShiftProvider>().clearActiveShift();
               context.read<AuthProvider>().logout();
             },
             icon: const Icon(

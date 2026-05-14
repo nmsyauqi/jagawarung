@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
 import '../providers/auth_provider.dart';
+import '../providers/shift_provider.dart';
 import '../main.dart'; // Memanggil rute WrapperScreen
 
 class SplashScreen extends StatefulWidget {
@@ -40,8 +41,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     Future.delayed(const Duration(seconds: 3), () async {
       if (mounted) {
         // Menunggu auto login memuat memori HP
-        await context.read<AuthProvider>().autoLogin();
-        
+        final authProvider = context.read<AuthProvider>();
+        await authProvider.autoLogin();
+
+        if (authProvider.isAuth && authProvider.isPegawai) {
+          await context.read<ShiftProvider>().restoreActiveShift(authProvider.currentUser!.idUser);
+        }
+
         if (mounted) {
           Navigator.of(context).pushReplacement(
             PageRouteBuilder(

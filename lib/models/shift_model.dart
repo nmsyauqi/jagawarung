@@ -12,6 +12,8 @@ class ShiftModel {
   final int? totalUangMasuk; 
   final int? totalTransaksi; 
   final bool isForceClosed;
+  final String status;
+  final String? forceClosedBy;
 
   ShiftModel({
     required this.idShift,
@@ -25,7 +27,12 @@ class ShiftModel {
     this.totalUangMasuk,
     this.totalTransaksi,
     this.isForceClosed = false,
+    this.status = 'active',
+    this.forceClosedBy,
   });
+
+  bool get isActive => status == 'active';
+  bool get isFinished => status != 'active';
 
   // ---> Rumus Selisih Kas Otomatis <---
   int get selisihKas {
@@ -58,10 +65,13 @@ class ShiftModel {
       'total_uang_masuk': totalUangMasuk,
       'total_transaksi': totalTransaksi,
       'is_force_closed': isForceClosed,
+      'status': status,
+      'force_closed_by': forceClosedBy,
     };
   }
 
   factory ShiftModel.fromMap(Map<String, dynamic> map) {
+    final statusValue = map['status'] as String?;
     return ShiftModel(
       idShift: map['id_shift'] ?? '',
       idWarung: map['id_warung'] ?? '',
@@ -74,6 +84,8 @@ class ShiftModel {
       totalUangMasuk: map['total_uang_masuk']?.toInt(),
       totalTransaksi: map['total_transaksi']?.toInt(),
       isForceClosed: map['is_force_closed'] ?? false,
+      status: statusValue ?? (map['waktu_selesai'] == null ? 'active' : 'finished'),
+      forceClosedBy: map['force_closed_by'],
     );
   }
 }

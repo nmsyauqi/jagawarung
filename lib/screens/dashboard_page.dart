@@ -21,6 +21,7 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   final DatabaseService _dbService = DatabaseService();
+  bool _hasHandledForceClose = false;
 
   void _refresh() => setState(() {});
 
@@ -42,10 +43,20 @@ class _DashboardPageState extends State<DashboardPage> {
     if (s == null) return const Scaffold();
 
     final authProvider = context.watch<AuthProvider>();
+    if (targetProvider.hasForceClosed && !_hasHandledForceClose) {
+      _hasHandledForceClose = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Shift Anda telah ditutup paksa oleh owner. Anda akan dikeluarkan.'),
+        ));
+        context.read<ShiftProvider>().clearActiveShift();
+        context.read<AuthProvider>().logout();
+      });
+    }
     final p_isPemilik = authProvider.isOwner;
     final user = authProvider.currentUser;
     final p_nama = user?.nama ?? 'Kasir';
-    final p_inisial = p_nama.isNotEmpty ? p_nama[0].toUpperCase() : 'P';
     
     final durasi = DateTime.now().difference(s.waktuMulai);
     final saldoSeharusnya = s.saldoAwal + targetProvider.totalUangMasuk;
