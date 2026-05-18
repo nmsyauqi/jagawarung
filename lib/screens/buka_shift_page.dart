@@ -64,6 +64,9 @@ class _BukaShiftPageState extends State<BukaShiftPage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        backgroundColor: AppTheme.surface,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: false,
         titleSpacing: 24, // Geser rapi selaras dengan padding body
         title: Text(
@@ -101,8 +104,18 @@ class _BukaShiftPageState extends State<BukaShiftPage> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppTheme.primary,
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft, end: Alignment.bottomRight,
+                  colors: [Color(0xFF0F172A), Color(0xFF1E3A5F)],
+                ),
                 borderRadius: BorderRadius.circular(AppTheme.r16),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primary.withOpacity(0.15),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  )
+                ],
               ),
               child: Row(
                 children: [

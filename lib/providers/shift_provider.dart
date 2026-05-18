@@ -26,6 +26,16 @@ class ShiftProvider with ChangeNotifier {
 
   // --- ACTIONS (FUNGSI UNTUK DIPANGGIL FRONTEND) ---
 
+  // 0. Fungsi Memuat Shift Aktif dari Firebase (Misal setelah reload/refresh)
+  Future<void> muatShiftAktif(String idUser) async {
+    final shift = await _dbService.ambilShiftAktif(idUser);
+    if (shift != null) {
+      _activeShift = shift;
+      _listTransaksi = await _dbService.ambilTransaksiByShift(shift.idShift);
+      notifyListeners();
+    }
+  }
+
   // 1. Fungsi Buka Shift (Sekarang butuh idWarung dan idUser)
   void bukaShift({
     required String idShift, 

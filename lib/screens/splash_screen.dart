@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
 import '../providers/auth_provider.dart';
+import '../providers/shift_provider.dart';
 import '../main.dart'; // Memanggil rute WrapperScreen
 
 class SplashScreen extends StatefulWidget {
@@ -43,15 +44,23 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         await context.read<AuthProvider>().autoLogin();
         
         if (mounted) {
-          Navigator.of(context).pushReplacement(
-            PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) => const WrapperScreen(),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-              transitionDuration: const Duration(milliseconds: 600), // Pindah halaman secara memudar (fade out)
-            ),
-          );
+          final auth = context.read<AuthProvider>();
+          // Jika pegawai berhasil login, pulihkan status shift aktif dari database
+          if (auth.isAuth && auth.isPegawai) {
+            await context.read<ShiftProvider>().muatShiftAktif(auth.currentUser!.idUser);
+          }
+          
+          if (mounted) {
+            Navigator.of(context).pushReplacement(
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) => const WrapperScreen(),
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                transitionDuration: const Duration(milliseconds: 600), // Pindah halaman secara memudar (fade out)
+              ),
+            );
+          }
         }
       }
     });
