@@ -68,21 +68,36 @@ class DatabaseService {
     }
   }
 
+  Future<void> updateShiftTotals(String idShift, int totalUangMasuk, int totalTransaksi) async {
+    try {
+      await _db.collection('shifts').doc(idShift).update({
+        'total_uang_masuk': totalUangMasuk,
+        'total_transaksi': totalTransaksi,
+      });
+    } catch (e) {
+      debugPrint("❌ Error update shift totals: $e");
+    }
+  }
+
   Stream<DocumentSnapshot<Map<String, dynamic>>> watchShift(String idShift) {
     return _db.collection('shifts').doc(idShift).snapshots();
   }
 
   Future<bool> tutupPaksaShift(ShiftModel shift) async {
     try {
-      // Bos menutup paksa: Uang masuk sistem dianggap sebagai Kas Akhir
       final waktuSelesai = DateTime.now();
+      final transaksi = await getTransaksiForShift(shift.idShift);
+      final totalUang = transaksi.fold<int>(0, (sum, tx) => sum + tx.nominal);
+      final jumlahTx = transaksi.length;
       await _db.collection('shifts').doc(shift.idShift).update({
         'waktu_selesai': waktuSelesai.toIso8601String(),
-        'saldo_akhir': (shift.saldoAwal + (shift.totalUangMasuk ?? 0)),
-        'selisih_kas': 0, // Dianggap nol karena dipaksa cocok oleh bos
-        'is_force_closed': true, // Rekam jejak bahwa ini ditutup bos
+        'saldo_akhir': (shift.saldoAwal + totalUang),
+        'selisih_kas': 0,
+        'is_force_closed': true,
         'status': 'force_closed',
         'force_closed_by': 'owner',
+        'total_uang_masuk': totalUang,
+        'total_transaksi': jumlahTx,
       });
       return true;
     } catch (e) {
@@ -268,12 +283,16 @@ class DatabaseService {
     }
   }
 
-  Future<bool> editProduk(String idProduk, String namaBaru, int hargaBaru) async {
+  Future<bool> editProduk(String idProduk, String namaBaru, int hargaBaru, {String? barcodeBaru}) async {
     try {
-      await _db.collection('produks').doc(idProduk).update({
+      final updateData = {
         'nama_produk': namaBaru,
         'harga': hargaBaru,
-      });
+      };
+      if (barcodeBaru != null) {
+        updateData['barcode'] = barcodeBaru;
+      }
+      await _db.collection('produks').doc(idProduk).update(updateData);
       return true;
     } catch (e) {
       debugPrint("❌ Error edit produk: $e");
@@ -288,6 +307,31 @@ class DatabaseService {
     } catch (e) {
       debugPrint("❌ Error hapus produk: $e");
       return false;
+    }
+  }
+
+  // ============================================
+  // --- FUNGSI BARCODE SCANNING ---
+  // ============================================
+
+  /// Cari produk berdasarkan barcode yang di-scan
+  /// Returns: ProdukModel jika ditemukan, null jika tidak
+  Future<ProdukModel?> cariProdukByBarcode(String idWarung, String barcodeScanned) async {
+    try {
+      final querySnapshot = await _db
+          .collection('produks')
+          .where('id_warung', isEqualTo: idWarung)
+          .where('barcode', isEqualTo: barcodeScanned)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        return ProdukModel.fromMap(querySnapshot.docs.first.data());
+      }
+      return null; // Produk tidak ditemukan
+    } catch (e) {
+      debugPrint("❌ Error cariProdukByBarcode: $e");
+      return null;
     }
   }
 }

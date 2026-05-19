@@ -114,7 +114,7 @@ class ShiftProvider with ChangeNotifier {
   }
 
   // 2. Fungsi Tambah Transaksi
-  void tambahTransaksi(String idTransaksi, int nominal, {String? note}) {
+  Future<void> tambahTransaksi(String idTransaksi, int nominal, {String? note}) async {
     if (!isShiftActive) return;
 
     final transaksiBaru = TransaksiModel(
@@ -127,7 +127,12 @@ class ShiftProvider with ChangeNotifier {
     );
 
     _listTransaksi.add(transaksiBaru);
-    _dbService.simpanTransaksi(transaksiBaru);
+    await _dbService.simpanTransaksi(transaksiBaru);
+    await _dbService.updateShiftTotals(
+      _activeShift!.idShift,
+      totalUangMasuk,
+      _listTransaksi.length,
+    );
     notifyListeners();
   }
 
