@@ -44,10 +44,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         final authProvider = context.read<AuthProvider>();
         await authProvider.autoLogin();
 
-        if (authProvider.isAuth && authProvider.isPegawai) {
-          await context.read<ShiftProvider>().restoreActiveShift(authProvider.currentUser!.idUser);
-        }
-
         if (mounted) {
           final auth = context.read<AuthProvider>();
           // Jika pegawai berhasil login, pulihkan status shift aktif dari database

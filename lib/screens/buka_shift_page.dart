@@ -128,6 +128,7 @@ class _BukaShiftPageState extends State<BukaShiftPage> {
         ),
         actions: [
           TextButton.icon(
+            onPressed: () {
               context.read<ShiftProvider>().reset();
               context.read<AuthProvider>().logout();
             },

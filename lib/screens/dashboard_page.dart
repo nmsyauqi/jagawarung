@@ -21,7 +21,6 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   final DatabaseService _dbService = DatabaseService();
-  bool _hasHandledForceClose = false;
 
   void _refresh() => setState(() {});
 
