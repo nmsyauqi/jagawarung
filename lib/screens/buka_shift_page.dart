@@ -54,14 +54,54 @@ class _BukaShiftPageState extends State<BukaShiftPage> {
     setState(() => _loading = false);
 
     if (!sukses) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Shift sudah aktif. Periksa kembali akun Anda atau refresh aplikasi.'),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Gagal memulai shift baru. Anda masih memiliki shift aktif!'),
+          backgroundColor: AppTheme.danger,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final shiftProvider = context.watch<ShiftProvider>();
+    if (shiftProvider.showForceClosedDialog) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text(
+              'Shift Ditutup Paksa',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.bold,
+                color: AppTheme.danger,
+              ),
+            ),
+            content: Text(
+              'Shift Anda telah ditutup paksa oleh Owner. Aplikasi telah melakukan logout dari shift tersebut.',
+              style: GoogleFonts.inter(),
+            ),
+            actions: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: () {
+                  context.read<ShiftProvider>().clearForceClosedDialogFlag();
+                  Navigator.pop(ctx);
+                },
+                child: const Text('Mengerti', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        );
+      });
+    }
+
     // Ambil data asli dari AuthProvider backend
     final authProvider = context.watch<AuthProvider>();
     final user = authProvider.currentUser;
@@ -73,6 +113,9 @@ class _BukaShiftPageState extends State<BukaShiftPage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        backgroundColor: AppTheme.surface,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: false,
         titleSpacing: 24, // Geser rapi selaras dengan padding body
         title: Text(
@@ -85,8 +128,7 @@ class _BukaShiftPageState extends State<BukaShiftPage> {
         ),
         actions: [
           TextButton.icon(
-            onPressed: () {
-              context.read<ShiftProvider>().clearActiveShift();
+              context.read<ShiftProvider>().reset();
               context.read<AuthProvider>().logout();
             },
             icon: const Icon(
@@ -111,8 +153,18 @@ class _BukaShiftPageState extends State<BukaShiftPage> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppTheme.primary,
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft, end: Alignment.bottomRight,
+                  colors: [Color(0xFF0F172A), Color(0xFF1E3A5F)],
+                ),
                 borderRadius: BorderRadius.circular(AppTheme.r16),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primary.withOpacity(0.15),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  )
+                ],
               ),
               child: Row(
                 children: [

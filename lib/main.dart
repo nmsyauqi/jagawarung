@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'firebase_options.dart';
-import 'theme.dart';
+import 'utils/app_theme.dart';
 
 // Import Screen UI
 import 'screens/splash_screen.dart';

@@ -12,14 +12,19 @@ class ShiftProvider with ChangeNotifier {
   // State / Memori Sementara
   ShiftModel? _activeShift;
   List<TransaksiModel> _listTransaksi = [];
-  bool _hasForceClosedEvent = false;
-  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _shiftSubscription;
+  StreamSubscription<DocumentSnapshot>? _shiftSubscription;
+  bool _showForceClosedDialog = false;
 
   // Getter untuk dibaca oleh Frontend UI
   ShiftModel? get activeShift => _activeShift;
   List<TransaksiModel> get listTransaksi => _listTransaksi;
   bool get isShiftActive => _activeShift != null;
-  bool get hasForceClosed => _hasForceClosedEvent;
+  bool get showForceClosedDialog => _showForceClosedDialog;
+
+  void clearForceClosedDialogFlag() {
+    _showForceClosedDialog = false;
+    notifyListeners();
+  }
 
   int get totalUangMasuk {
     int total = 0;
@@ -31,27 +36,34 @@ class ShiftProvider with ChangeNotifier {
 
   // --- ACTIONS (FUNGSI UNTUK DIPANGGIL FRONTEND) ---
 
-  Future<bool> restoreActiveShift(String idUser) async {
-    _hasForceClosedEvent = false;
-    final activeShift = await _dbService.getActiveShiftByUser(idUser);
-    if (activeShift == null) return false;
-
-    _activeShift = activeShift;
-    _listTransaksi = await _dbService.getTransaksiForShift(activeShift.idShift);
-    _listenActiveShift(activeShift.idShift);
-    notifyListeners();
-    return true;
+  // 0. Fungsi Memuat Shift Aktif dari Firebase (Misal setelah reload/refresh)
+  Future<void> muatShiftAktif(String idUser) async {
+    final shift = await _dbService.ambilShiftAktif(idUser);
+    if (shift != null) {
+      _activeShift = shift;
+      _listTransaksi = await _dbService.ambilTransaksiByShift(shift.idShift);
+      _mulaiListenShift(shift.idShift);
+      notifyListeners();
+    }
   }
 
+  // 1. Fungsi Buka Shift (Sekarang butuh idWarung dan idUser, mengembalikan Future<bool>)
   Future<bool> bukaShift({
-    required String idShift,
-    required String idWarung,
-    required String idUser,
-    required String namaPengguna,
-    required int saldoAwal,
+    required String idShift, 
+    required String idWarung, 
+    required String idUser, 
+    required String namaPengguna, 
+    required int saldoAwal
   }) async {
-    final existing = await _dbService.getActiveShiftByUser(idUser);
-    if (existing != null) return false;
+    // Cek apakah sudah ada shift aktif di database untuk pegawai ini
+    final shiftSama = await _dbService.ambilShiftAktif(idUser);
+    if (shiftSama != null) {
+      _activeShift = shiftSama;
+      _listTransaksi = await _dbService.ambilTransaksiByShift(shiftSama.idShift);
+      _mulaiListenShift(shiftSama.idShift);
+      notifyListeners();
+      return false; // Gagal membuka shift baru karena ada shift aktif
+    }
 
     _activeShift = ShiftModel(
       idShift: idShift,
@@ -63,84 +75,46 @@ class ShiftProvider with ChangeNotifier {
       status: 'active',
       isForceClosed: false,
     );
-
-    _listTransaksi = [];
-    await _dbService.simpanShift(_activeShift!);
-    _listenActiveShift(idShift);
-    notifyListeners();
+    
+    _listTransaksi = []; 
+    
+    // Simpan ke Firebase
+    await _dbService.simpanShift(_activeShift!); 
+    _mulaiListenShift(idShift);
+    notifyListeners(); 
     return true;
-  }
-
-  void _listenActiveShift(String idShift) {
-    _cancelShiftListener();
-    _shiftSubscription = _dbService.watchShift(idShift).listen((snapshot) {
-      if (!snapshot.exists) return;
-      final updated = ShiftModel.fromMap(snapshot.data() ?? {});
-
-      if (_activeShift == null) {
-        _activeShift = updated;
-      } else {
-        if (updated.isForceClosed && !_activeShift!.isForceClosed) {
-          _hasForceClosedEvent = true;
-        }
-        _activeShift = updated;
-      }
-
-      if (!updated.isActive) {
-        // Tetap simpan informasi terakhir, tetapi hentikan listen saat shift selesai.
-        _cancelShiftListener();
-      }
-
-      notifyListeners();
-    });
-  }
-
-  void _cancelShiftListener() {
-    _shiftSubscription?.cancel();
-    _shiftSubscription = null;
-  }
-
-  void clearForceClosedFlag() {
-    _hasForceClosedEvent = false;
-    notifyListeners();
-  }
-
-  void clearActiveShift() {
-    _activeShift = null;
-    _listTransaksi = [];
-    _hasForceClosedEvent = false;
-    _cancelShiftListener();
-    notifyListeners();
   }
 
   // 2. Fungsi Tambah Transaksi
   Future<void> tambahTransaksi(String idTransaksi, int nominal, {String? note}) async {
-    if (!isShiftActive) return;
+    if (!isShiftActive) return; 
 
     final transaksiBaru = TransaksiModel(
       idTransaksi: idTransaksi,
       idShift: _activeShift!.idShift,
-      idWarung: _activeShift!.idWarung,
+      idWarung: _activeShift!.idWarung, // Ambil idWarung dari shift yang sedang aktif
       nominal: nominal,
       waktuTransaksi: DateTime.now(),
       note: note,
     );
 
     _listTransaksi.add(transaksiBaru);
-    await _dbService.simpanTransaksi(transaksiBaru);
+    await _dbService.simpanTransaksi(transaksiBaru); // Simpan ke Firebase
     await _dbService.updateShiftTotals(
       _activeShift!.idShift,
       totalUangMasuk,
       _listTransaksi.length,
     );
-    notifyListeners();
+    notifyListeners(); 
   }
 
   // 3. Fungsi Tutup Shift (Versi Rekap untuk Dashboard Owner)
   void tutupShift(int saldoAkhir) {
     if (_activeShift != null) {
+      _batalListenShift(); // Stop listening
+      
       final waktuSelesai = DateTime.now();
-      int totalUang = totalUangMasuk;
+      int totalUang = totalUangMasuk; 
       int jumlahTx = _listTransaksi.length;
 
       final shiftSelesai = ShiftModel(
@@ -152,20 +126,59 @@ class ShiftProvider with ChangeNotifier {
         waktuSelesai: waktuSelesai,
         saldoAwal: _activeShift!.saldoAwal,
         saldoAkhir: saldoAkhir,
-        totalUangMasuk: totalUang,
-        totalTransaksi: jumlahTx,
+        totalUangMasuk: totalUang, // Rekap disimpan ke DB
+        totalTransaksi: jumlahTx,  // Rekap disimpan ke DB
         status: 'finished',
         isForceClosed: false,
       );
-
-      _dbService.simpanShift(shiftSelesai);
-      clearActiveShift();
+      
+      _dbService.simpanShift(shiftSelesai); 
+      
+      _activeShift = null; 
+      _listTransaksi = [];
+      
+      notifyListeners(); 
     }
+  }
+
+  // --- LOGIKA REAL-TIME LISTENER ---
+  void _mulaiListenShift(String idShift) {
+    _batalListenShift();
+    _shiftSubscription = _dbService.streamShiftDetail(idShift).listen((snapshot) {
+      if (snapshot.exists) {
+        final data = snapshot.data() as Map<String, dynamic>;
+        final shift = ShiftModel.fromMap(data);
+        if (shift.waktuSelesai != null) {
+          // Shift telah selesai/ditutup paksa!
+          final isFC = shift.isForceClosed;
+          _activeShift = null;
+          _listTransaksi = [];
+          _batalListenShift();
+          if (isFC) {
+            _showForceClosedDialog = true;
+          }
+          notifyListeners();
+        }
+      }
+    });
+  }
+
+  void _batalListenShift() {
+    _shiftSubscription?.cancel();
+    _shiftSubscription = null;
+  }
+
+  void reset() {
+    _batalListenShift();
+    _activeShift = null;
+    _listTransaksi = [];
+    _showForceClosedDialog = false;
+    notifyListeners();
   }
 
   @override
   void dispose() {
-    _cancelShiftListener();
+    _batalListenShift();
     super.dispose();
   }
 }

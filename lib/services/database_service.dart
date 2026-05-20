@@ -334,4 +334,45 @@ class DatabaseService {
       return null;
     }
   }
+
+  // ---> AMBIL SHIFT AKTIF PEGAWAI <---
+  Future<ShiftModel?> ambilShiftAktif(String idUser) async {
+    try {
+      final querySnapshot = await _db
+          .collection('shifts')
+          .where('id_user', isEqualTo: idUser)
+          .where('waktu_selesai', isNull: true)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        return ShiftModel.fromMap(querySnapshot.docs.first.data());
+      }
+      return null;
+    } catch (e) {
+      debugPrint("❌ Error ambilShiftAktif: $e");
+      return null;
+    }
+  }
+
+  // ---> AMBIL TRANSAKSI BERDASARKAN SHIFT <---
+  Future<List<TransaksiModel>> ambilTransaksiByShift(String idShift) async {
+    try {
+      final querySnapshot = await _db
+          .collection('transaksis')
+          .where('id_shift', isEqualTo: idShift)
+          .get();
+      return querySnapshot.docs
+          .map((doc) => TransaksiModel.fromMap(doc.data()))
+          .toList();
+    } catch (e) {
+      debugPrint("❌ Error ambilTransaksiByShift: $e");
+      return [];
+    }
+  }
+
+  // ---> STREAM SHIFT DETAIL <---
+  Stream<DocumentSnapshot> streamShiftDetail(String idShift) {
+    return _db.collection('shifts').doc(idShift).snapshots();
+  }
 }

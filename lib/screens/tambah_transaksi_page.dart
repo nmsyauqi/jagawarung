@@ -11,7 +11,8 @@ import '../services/database_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class TambahTransaksiPage extends StatefulWidget {
-  const TambahTransaksiPage({super.key});
+  final ProdukModel? produkAwal;
+  const TambahTransaksiPage({super.key, this.produkAwal});
 
   @override
   State<TambahTransaksiPage> createState() => _TambahTransaksiPageState();
@@ -20,6 +21,15 @@ class TambahTransaksiPage extends StatefulWidget {
 class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
   String _nominal = '';
   final _catatanCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.produkAwal != null) {
+      _keranjangProduk[widget.produkAwal!.idProduk] = widget.produkAwal!;
+      _keranjangCount[widget.produkAwal!.idProduk] = 1;
+    }
+  }
   final _desktopNominalCtrl =
       TextEditingController(); // Khusus form input Desktop
   bool _loading = false;

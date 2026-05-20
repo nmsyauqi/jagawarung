@@ -8,7 +8,7 @@ class Fmt {
   static final _tanggalLengkap = DateFormat('EEEE, d MMMM yyyy', 'id_ID');
   static final _tanggalJam = DateFormat('d MMM yyyy, HH:mm', 'id_ID');
 
-  static String uang(double n) => _rp.format(n);
+  static String uang(num n) => _rp.format(n);
   static String tanggal(DateTime d) => _tanggal.format(d);
   static String jam(DateTime d) => _jam.format(d);
   static String tanggalLengkap(DateTime d) => _tanggalLengkap.format(d);

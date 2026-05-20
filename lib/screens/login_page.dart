@@ -186,16 +186,20 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
     final sukses = await context.read<AuthProvider>().login(idWarung, sandi);
 
     if (!mounted) return;
-    setState(() => _isLoading = false);
 
-    if (!sukses) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login gagal! Pastikan ID dan Sandi benar.')));
-    } else {
-      final authProvider = context.read<AuthProvider>();
-      if (authProvider.isPegawai) {
-        await context.read<ShiftProvider>().restoreActiveShift(authProvider.currentUser!.idUser);
+
+    if (sukses) {
+      final auth = context.read<AuthProvider>();
+      if (auth.isPegawai) {
+        await context.read<ShiftProvider>().muatShiftAktif(auth.currentUser!.idUser);
       }
-      Navigator.of(context).pop();
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      Navigator.of(context).pop(); 
+    } else {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login gagal! Pastikan ID dan Sandi benar.')));
+
     }
   }
 
