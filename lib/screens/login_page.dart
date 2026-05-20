@@ -3,11 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/shift_provider.dart';
 import '../utils/app_theme.dart';
 import '../services/database_service.dart';
-
-import 'owner_dashboard.dart';
-import 'buka_shift_page.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -86,7 +84,7 @@ class LoginPage extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text('Jaga', style: GoogleFonts.plusJakartaSans(fontSize: 36, fontWeight: FontWeight.w800, color: AppTheme.textDark, letterSpacing: -1)),
-                          Text('Warung.', style: GoogleFonts.plusJakartaSans(fontSize: 36, fontWeight: FontWeight.w800, color: AppTheme.primary, letterSpacing: -1)),
+                          Text('Warung', style: GoogleFonts.plusJakartaSans(fontSize: 36, fontWeight: FontWeight.w800, color: AppTheme.primary, letterSpacing: -1)),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -188,12 +186,20 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
     final sukses = await context.read<AuthProvider>().login(idWarung, sandi);
 
     if (!mounted) return;
-    setState(() => _isLoading = false);
 
-    if (!sukses) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login gagal! Pastikan ID dan Sandi benar.')));
-    } else {
+
+    if (sukses) {
+      final auth = context.read<AuthProvider>();
+      if (auth.isPegawai) {
+        await context.read<ShiftProvider>().muatShiftAktif(auth.currentUser!.idUser);
+      }
+      if (!mounted) return;
+      setState(() => _isLoading = false);
       Navigator.of(context).pop(); 
+    } else {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login gagal! Pastikan ID dan Sandi benar.')));
+
     }
   }
 

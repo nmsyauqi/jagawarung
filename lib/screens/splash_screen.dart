@@ -41,8 +41,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     Future.delayed(const Duration(seconds: 3), () async {
       if (mounted) {
         // Menunggu auto login memuat memori HP
-        await context.read<AuthProvider>().autoLogin();
-        
+        final authProvider = context.read<AuthProvider>();
+        await authProvider.autoLogin();
+
         if (mounted) {
           final auth = context.read<AuthProvider>();
           // Jika pegawai berhasil login, pulihkan status shift aktif dari database

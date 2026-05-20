@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../utils/app_theme.dart';
 import '../providers/auth_provider.dart';
+import '../providers/shift_provider.dart';
 import '../services/database_service.dart';
 import '../models/user_model.dart';
 import '../models/transaksi_model.dart';
@@ -1303,6 +1304,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
             onPressed: () {
               Navigator.pop(ctx);
+              context.read<ShiftProvider>().reset();
               context.read<AuthProvider>().logout();
             },
             child: const Text(

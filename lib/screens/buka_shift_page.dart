@@ -37,22 +37,71 @@ class _BukaShiftPageState extends State<BukaShiftPage> {
     setState(() => _loading = true);
 
     final user = context.read<AuthProvider>().currentUser;
-    if (user == null) return;
+    if (user == null) {
+      setState(() => _loading = false);
+      return;
+    }
 
-    context.read<ShiftProvider>().bukaShift(
+    final sukses = await context.read<ShiftProvider>().bukaShift(
       idShift: 'SH_${DateTime.now().millisecondsSinceEpoch}',
       idWarung: user.idWarung,
       idUser: user.idUser,
       namaPengguna: user.nama,
       saldoAwal: nominal,
     );
-    
+
     if (!mounted) return;
-    // Navigator.pushReplacement tidak diperlukan lagi, otomatis digeser WrapperScreen!
+    setState(() => _loading = false);
+
+    if (!sukses) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Gagal memulai shift baru. Anda masih memiliki shift aktif!'),
+          backgroundColor: AppTheme.danger,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final shiftProvider = context.watch<ShiftProvider>();
+    if (shiftProvider.showForceClosedDialog) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text(
+              'Shift Ditutup Paksa',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.bold,
+                color: AppTheme.danger,
+              ),
+            ),
+            content: Text(
+              'Shift Anda telah ditutup paksa oleh Owner. Aplikasi telah melakukan logout dari shift tersebut.',
+              style: GoogleFonts.inter(),
+            ),
+            actions: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: () {
+                  context.read<ShiftProvider>().clearForceClosedDialogFlag();
+                  Navigator.pop(ctx);
+                },
+                child: const Text('Mengerti', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        );
+      });
+    }
+
     // Ambil data asli dari AuthProvider backend
     final authProvider = context.watch<AuthProvider>();
     final user = authProvider.currentUser;
@@ -80,6 +129,7 @@ class _BukaShiftPageState extends State<BukaShiftPage> {
         actions: [
           TextButton.icon(
             onPressed: () {
+              context.read<ShiftProvider>().reset();
               context.read<AuthProvider>().logout();
             },
             icon: const Icon(
