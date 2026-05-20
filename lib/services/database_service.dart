@@ -278,4 +278,9 @@ class DatabaseService {
       return [];
     }
   }
+
+  // ---> STREAM SHIFT DETAIL <---
+  Stream<DocumentSnapshot> streamShiftDetail(String idShift) {
+    return _db.collection('shifts').doc(idShift).snapshots();
+  }
 }

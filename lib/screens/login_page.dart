@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/shift_provider.dart';
 import '../utils/app_theme.dart';
 import '../services/database_service.dart';
 
@@ -188,12 +189,18 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
     final sukses = await context.read<AuthProvider>().login(idWarung, sandi);
 
     if (!mounted) return;
-    setState(() => _isLoading = false);
 
-    if (!sukses) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login gagal! Pastikan ID dan Sandi benar.')));
-    } else {
+    if (sukses) {
+      final auth = context.read<AuthProvider>();
+      if (auth.isPegawai) {
+        await context.read<ShiftProvider>().muatShiftAktif(auth.currentUser!.idUser);
+      }
+      if (!mounted) return;
+      setState(() => _isLoading = false);
       Navigator.of(context).pop(); 
+    } else {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login gagal! Pastikan ID dan Sandi benar.')));
     }
   }
 
