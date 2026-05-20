@@ -706,40 +706,45 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Badge Label Status dengan Background Warna Solid (Peaked Color)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color:
-                          statusColor, // Latar teks warna solid (merah pekat, dsb)
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          !isSelesai ? Icons.timer : Icons.assignment_rounded,
-                          color: Colors.white,
-                          size: 14,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          teksStatus,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Row(
+                  // Sisi Kiri: Status & Nama Kasir (Vertikal)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // Badge Label Status dengan Background Warna Solid (Peaked Color)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: statusColor, // Latar teks warna solid (merah pekat, dsb)
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              !isSelesai ? Icons.timer : Icons.assignment_rounded,
+                              color: Colors.white,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              teksStatus,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      // Nama Kasir diposisikan di bawah status kasir
                       Text(
                         "Kasir: ${shift.namaPengguna}",
                         style: GoogleFonts.inter(
@@ -748,7 +753,13 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                           color: AppTheme.textDark,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                    ],
+                  ),
+
+                  // Sisi Kanan: Aksi Edit & Hapus
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                       if (shift.isForceClosed) ...[
                         IconButton(
                           icon: const Icon(
@@ -761,7 +772,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                           tooltip: 'Koreksi Data Laci',
                           onPressed: () => _showKoreksiKasirDialog(shift),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                       ],
                       IconButton(
                         icon: const Icon(
