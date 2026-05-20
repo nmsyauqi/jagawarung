@@ -258,7 +258,6 @@ class _DashboardPageState extends State<DashboardPage> {
     final p_isPemilik = authProvider.isOwner;
     final user = authProvider.currentUser;
     final p_nama = user?.nama ?? 'Kasir';
-    final p_inisial = p_nama.isNotEmpty ? p_nama[0].toUpperCase() : 'P';
     final durasi = DateTime.now().difference(s.waktuMulai);
     final saldoSeharusnya = s.saldoAwal + targetProvider.totalUangMasuk;
     final listTx = targetProvider.listTransaksi;
