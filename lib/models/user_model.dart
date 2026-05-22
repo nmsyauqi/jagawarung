@@ -4,18 +4,16 @@ class UserModel {
   final String idUser;
   final String idWarung;
   final String nama;
-  final String role; 
-  final String pin; 
-  final String? noHp; 
-  final String? email; // ---> TAMBAHAN BARU UNTUK FIREBASE AUTH
+  final String role; // Isinya hanya: "owner" atau "pegawai"
+  final String? pin; // Passcode 4-6 digit untuk login pegawai (opsional untuk owner)
+  final String? email; // Email login khusus untuk owner
 
   UserModel({
     required this.idUser,
     required this.idWarung,
     required this.nama,
     required this.role,
-    required this.pin,
-    this.noHp,
+    this.pin,
     this.email,
   });
 
@@ -26,7 +24,6 @@ class UserModel {
       'nama': nama,
       'role': role,
       'pin': pin,
-      'no_hp': noHp,
       'email': email,
     };
   }
@@ -36,9 +33,8 @@ class UserModel {
       idUser: map['id_user'] ?? '',
       idWarung: map['id_warung'] ?? '',
       nama: map['nama'] ?? '',
-      role: map['role'] ?? '',
-      pin: map['pin'] ?? '',
-      noHp: map['no_hp'],
+      role: map['role'] ?? 'pegawai',
+      pin: map['pin'],
       email: map['email'],
     );
   }

@@ -88,7 +88,7 @@ class DatabaseService {
       String uid = cred.user!.uid; 
 
       WarungModel warung = WarungModel(idWarung: idWarung, namaWarung: namaWarung, idOwner: uid);
-      UserModel owner = UserModel(idUser: uid, idWarung: idWarung, nama: namaOwner, role: 'owner', pin: 'auth', noHp: extra, email: dummyEmail);
+      UserModel owner = UserModel(idUser: uid, idWarung: idWarung, nama: namaOwner, role: 'owner', pin: 'auth', email: dummyEmail);
       
       await Future.wait([
         _db.collection('warungs').doc(idWarung).set(warung.toMap()),

@@ -41,7 +41,6 @@ class AuthProvider with ChangeNotifier {
         nama: namaBaru,
         role: _currentUser!.role,
         pin: pinBaru ?? _currentUser!.pin,
-        noHp: _currentUser!.noHp,
         email: _currentUser!.email,
       );
       notifyListeners();
