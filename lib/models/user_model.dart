@@ -2,10 +2,12 @@
 
 class UserModel {
   final String idUser;
-  final String idWarung; // Sebagai referensi warung tempat user ini bekerja/memiliki
+  final String idWarung;
   final String nama;
-  final String role; // Isinya hanya: "owner" atau "pegawai"
-  final String pin; // Passcode 4-6 digit untuk login
+  final String role; 
+  final String pin; 
+  final String? noHp; 
+  final String? email; // ---> TAMBAHAN BARU UNTUK FIREBASE AUTH
 
   UserModel({
     required this.idUser,
@@ -13,6 +15,8 @@ class UserModel {
     required this.nama,
     required this.role,
     required this.pin,
+    this.noHp,
+    this.email,
   });
 
   Map<String, dynamic> toMap() {
@@ -22,6 +26,8 @@ class UserModel {
       'nama': nama,
       'role': role,
       'pin': pin,
+      'no_hp': noHp,
+      'email': email,
     };
   }
 
@@ -30,8 +36,10 @@ class UserModel {
       idUser: map['id_user'] ?? '',
       idWarung: map['id_warung'] ?? '',
       nama: map['nama'] ?? '',
-      role: map['role'] ?? 'pegawai',
+      role: map['role'] ?? '',
       pin: map['pin'] ?? '',
+      noHp: map['no_hp'],
+      email: map['email'],
     );
   }
 }

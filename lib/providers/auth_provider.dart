@@ -1,86 +1,84 @@
 // lib/providers/auth_provider.dart
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
 import '../services/database_service.dart';
 
 class AuthProvider with ChangeNotifier {
   final DatabaseService _dbService = DatabaseService();
-  
   UserModel? _currentUser;
-  bool _isLoading = false;
 
   UserModel? get currentUser => _currentUser;
-  bool get isLoading => _isLoading;
-  bool get isAuth => _currentUser != null; // Cek apakah ada user yang login
-  
-  // Bantuan pengecekan role untuk UI
+  bool get isAuthenticated => _currentUser != null;
+
+  // ============================================================================
+  // ---> JEMBATAN KOMPATIBILITAS UI (ADAPTER) <---
+  // ============================================================================
+  bool get isAuth => isAuthenticated;
   bool get isOwner => _currentUser?.role == 'owner';
   bool get isPegawai => _currentUser?.role == 'pegawai';
 
-  Future<bool> login(String idWarung, String pin) async {
-    _isLoading = true;
-    notifyListeners(); 
-
-    final user = await _dbService.loginUser(idWarung, pin);
-
-    _isLoading = false;
-
-    if (user != null) {
-      _currentUser = user; 
-      
-      // Simpan sesi permanen
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('saved_id_warung', idWarung);
-      await prefs.setString('saved_pin', pin);
-      
-      notifyListeners(); 
-      return true; 
-    } else {
-      notifyListeners(); 
-      return false; 
-    }
+  Future<void> autoLogin() async {
+    await Future.delayed(const Duration(milliseconds: 500));
   }
 
-  Future<bool> autoLogin() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (!prefs.containsKey('saved_id_warung') || !prefs.containsKey('saved_pin')) {
-      return false;
-    }
+  // Menjembatani UI Login lama yang belum dipisah
+  Future<bool> login(String idWarung, String sandi) async {
+    // 1. Coba login sebagai Owner (Sistem butuh email, kita akali dengan email dummy dari ID)
+    String dummyEmail = "${idWarung.toLowerCase()}@jagawarung.com";
+    bool isOwnerLogin = await loginOwner(dummyEmail, sandi);
+    if (isOwnerLogin) return true;
     
-    String idWarung = prefs.getString('saved_id_warung')!;
-    String pin = prefs.getString('saved_pin')!;
-    
-    // Login otomatis
-    final user = await _dbService.loginUser(idWarung, pin);
-    if (user != null) {
-      _currentUser = user;
-      notifyListeners();
-      return true;
-    } else {
-      await prefs.clear();
-      return false;
-    }
+    // 2. Jika gagal, berarti dia Pegawai. Coba login via PIN biasa.
+    return await loginPegawai(idWarung, sandi);
   }
 
-  Future<void> logout() async {
-    _currentUser = null;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-    notifyListeners(); 
-  }
-
-  // --- Fungsi Tambahan: Update State Profil ---
-  void perbaruiProfilLokal(String namaBaru, String pinBaru) {
+  void perbaruiProfilLokal(String namaBaru, [String? pinBaru]) {
     if (_currentUser != null) {
       _currentUser = UserModel(
         idUser: _currentUser!.idUser,
         idWarung: _currentUser!.idWarung,
-        role: _currentUser!.role,
         nama: namaBaru,
-        pin: pinBaru,
+        role: _currentUser!.role,
+        pin: pinBaru ?? _currentUser!.pin,
+        noHp: _currentUser!.noHp,
+        email: _currentUser!.email,
       );
       notifyListeners();
     }
+  }
+  // ============================================================================
+
+  Future<bool> loginPegawai(String idWarung, String pin) async {
+    final user = await _dbService.loginPegawai(idWarung, pin);
+    if (user != null) {
+      _currentUser = user;
+      notifyListeners();
+      return true;
+    }
+    return false;
+  }
+
+  Future<bool> loginOwner(String email, String password) async {
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
+      if (userCredential.user != null) {
+        final user = await _dbService.getOwnerProfile(userCredential.user!.uid);
+        if (user != null) {
+          _currentUser = user;
+          notifyListeners();
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  void logout() {
+    FirebaseAuth.instance.signOut(); 
+    _currentUser = null;
+    notifyListeners();
   }
 }
