@@ -11,6 +11,7 @@ import '../services/database_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'tambah_transaksi_page.dart';
 import 'tutup_shift_page.dart';
+import 'barcode_scanner_page.dart'; // 👈 Tambahkan import scanner asli
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -35,6 +36,38 @@ class _DashboardPageState extends State<DashboardPage> {
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (_) => const TutupShiftPage()));
+  }
+
+  Future<void> _openRealCameraScanner(String idWarung) async {
+    // 1. Buka layar kamera asli buatan teman Anda
+    final ProdukModel? scannedProduk = await Navigator.of(context).push<ProdukModel?>(
+      MaterialPageRoute(
+        builder: (_) => BarcodeScannerPage(idWarung: idWarung),
+      ),
+    );
+
+    // 2. Jika sukses menemukan produk (tidak null), langsung masukkan ke halaman kasir!
+    if (scannedProduk != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle_rounded, color: Colors.white),
+              const SizedBox(width: 8),
+              Text('Barcode ${scannedProduk.namaProduk} berhasil di-scan! (BEEP)'),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => TambahTransaksiPage(produkAwal: scannedProduk),
+        ),
+      ).then((_) => _refresh());
+    }
   }
 
   void _showBarcodeScannerDialog(String idWarung) {
@@ -633,12 +666,15 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         child: Row(
           children: [
-            // ---> TOMBOL SCAN BARCODE (KAMERA) <---
+            // ---> TOMBOL SCAN BARCODE (KAMERA ASLI) <---
             SizedBox(
               width: 56,
               height: 56,
               child: OutlinedButton(
-                onPressed: () => _showBarcodeScannerDialog(s.idWarung),
+                onPressed: () {
+                  // _showBarcodeScannerDialog(s.idWarung); // <-- Simulasi dimatikan
+                  _openRealCameraScanner(s.idWarung);     // <-- Panggil kamera asli!
+                },
                 style: OutlinedButton.styleFrom(
                   padding: EdgeInsets.zero,
                   side: BorderSide(

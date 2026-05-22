@@ -5,14 +5,16 @@ class UserModel {
   final String idWarung; // Sebagai referensi warung tempat user ini bekerja/memiliki
   final String nama;
   final String role; // Isinya hanya: "owner" atau "pegawai"
-  final String pin; // Passcode 4-6 digit untuk login
+  final String? pin; // Passcode 4-6 digit untuk login pegawai (opsional untuk owner)
+  final String? email; // Email login khusus untuk owner
 
   UserModel({
     required this.idUser,
     required this.idWarung,
     required this.nama,
     required this.role,
-    required this.pin,
+    this.pin,
+    this.email,
   });
 
   Map<String, dynamic> toMap() {
@@ -22,6 +24,7 @@ class UserModel {
       'nama': nama,
       'role': role,
       'pin': pin,
+      'email': email,
     };
   }
 
@@ -31,7 +34,8 @@ class UserModel {
       idWarung: map['id_warung'] ?? '',
       nama: map['nama'] ?? '',
       role: map['role'] ?? 'pegawai',
-      pin: map['pin'] ?? '',
+      pin: map['pin'],
+      email: map['email'],
     );
   }
 }

@@ -224,10 +224,27 @@ class DatabaseService {
 
   Future<bool> hapusShift(String idShift) async {
     try {
-      await _db.collection('shifts').doc(idShift).delete();
+      // 1. Inisialisasi Batch
+      WriteBatch batch = _db.batch();
+
+      // 2. Ambil semua transaksi anak (child) yang terikat pada id_shift ini
+      final snapshot = await _db.collection('transaksis').where('id_shift', isEqualTo: idShift).get();
+
+      // 3. Masukkan perintah hapus untuk setiap transaksi ke dalam batch
+      for (var doc in snapshot.docs) {
+        batch.delete(doc.reference);
+      }
+
+      // 4. Masukkan perintah hapus untuk dokumen shift induk (parent) ke dalam batch
+      DocumentReference shiftRef = _db.collection('shifts').doc(idShift);
+      batch.delete(shiftRef);
+
+      // 5. Eksekusi seluruh operasi sekaligus secara Atomic
+      await batch.commit();
+
       return true;
     } catch (e) {
-      debugPrint("❌ Error hapus shift: $e");
+      debugPrint("❌ Error hapus shift dengan cascade delete: $e");
       return false;
     }
   }
