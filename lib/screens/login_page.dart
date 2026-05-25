@@ -189,7 +189,7 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
 
     if (_isOwnerMode) {
       // Dummy Email format untuk Firebase Auth
-      final dummyEmail = "$idWarung@jagawarung.com";
+      final dummyEmail = "${idWarung.toLowerCase()}@jagawarung.com";
       sukses = await auth.loginOwner(dummyEmail, sandi);
     } else {
       sukses = await auth.loginPegawai(idWarung, sandi);
@@ -349,7 +349,7 @@ class _DaftarWarungPageState extends State<DaftarWarungPage> {
     
     if (sukses) {
       // Langsung login setelah sukses registrasi ke Firebase
-      final dummyEmail = "${_idCtrl.text}@jagawarung.com";
+      final dummyEmail = "${_idCtrl.text.toLowerCase()}@jagawarung.com";
       await context.read<AuthProvider>().loginOwner(dummyEmail, _passCtrl.text);
       if (!mounted) return;
       setState(() => _isLoading = false);
