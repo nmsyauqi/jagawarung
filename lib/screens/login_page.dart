@@ -169,6 +169,7 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
   final _passCtrl = TextEditingController();
   bool _isLoading = false;
   bool _obscureText = true;
+  bool _isOwnerMode = false; // Mode split (Default: Pegawai)
 
   @override
   void dispose() {
@@ -183,14 +184,21 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
     if (idWarung.isEmpty || sandi.isEmpty) return;
 
     setState(() => _isLoading = true);
-    final sukses = await context.read<AuthProvider>().login(idWarung, sandi);
+    final auth = context.read<AuthProvider>();
+    bool sukses = false;
+
+    if (_isOwnerMode) {
+      // Dummy Email format untuk Firebase Auth
+      final dummyEmail = "$idWarung@jagawarung.com";
+      sukses = await auth.loginOwner(dummyEmail, sandi);
+    } else {
+      sukses = await auth.loginPegawai(idWarung, sandi);
+    }
 
     if (!mounted) return;
 
-
     if (sukses) {
-      final auth = context.read<AuthProvider>();
-      if (auth.isPegawai) {
+      if (auth.isPegawai && auth.currentUser != null) {
         await context.read<ShiftProvider>().muatShiftAktif(auth.currentUser!.idUser);
       }
       if (!mounted) return;
@@ -199,7 +207,6 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
     } else {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login gagal! Pastikan ID dan Sandi benar.')));
-
     }
   }
 
@@ -245,11 +252,11 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
               TextField(
                 controller: _passCtrl,
                 obscureText: _obscureText,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                keyboardType: _isOwnerMode ? TextInputType.text : TextInputType.number,
+                inputFormatters: _isOwnerMode ? [] : [FilteringTextInputFormatter.digitsOnly],
                 style: GoogleFonts.inter(fontSize: 15),
                 decoration: InputDecoration(
-                  hintText: 'PIN / Password',
+                  hintText: _isOwnerMode ? 'Kata Sandi Owner' : 'PIN Kasir (6-digit)',
                   fillColor: Colors.white,
                   filled: true,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -262,7 +269,25 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
+
+              // Toggle Mode Button
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _isOwnerMode = !_isOwnerMode;
+                      _passCtrl.clear();
+                    });
+                  },
+                  child: Text(
+                    _isOwnerMode ? 'Masuk sebagai Kasir?' : 'Masuk sebagai Owner?',
+                    style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.primary),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
 
               // Button
               SizedBox(
@@ -300,6 +325,7 @@ class DaftarWarungPage extends StatefulWidget {
 class _DaftarWarungPageState extends State<DaftarWarungPage> {
   final _namaWarungCtrl = TextEditingController();
   final _namaOwnerCtrl = TextEditingController();
+  final _noHpCtrl = TextEditingController(); // Input HP Opsional dari Backend
   final _idCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final DatabaseService _dbService = DatabaseService();
@@ -315,14 +341,16 @@ class _DaftarWarungPageState extends State<DaftarWarungPage> {
       _namaWarungCtrl.text, 
       _namaOwnerCtrl.text, 
       _idCtrl.text, 
-      _passCtrl.text
+      _passCtrl.text,
+      _noHpCtrl.text // Opsional
     );
 
     if (!mounted) return;
     
     if (sukses) {
       // Langsung login setelah sukses registrasi ke Firebase
-      await context.read<AuthProvider>().login(_idCtrl.text, _passCtrl.text);
+      final dummyEmail = "${_idCtrl.text}@jagawarung.com";
+      await context.read<AuthProvider>().loginOwner(dummyEmail, _passCtrl.text);
       if (!mounted) return;
       setState(() => _isLoading = false);
       
@@ -330,7 +358,7 @@ class _DaftarWarungPageState extends State<DaftarWarungPage> {
       Navigator.of(context).pop();
     } else {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal! ID Warung (Username) sudah terpakai.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal! Cek koneksi atau ID Warung sudah terpakai.')));
     }
   }
 
@@ -338,54 +366,96 @@ class _DaftarWarungPageState extends State<DaftarWarungPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.surface,
-      appBar: AppBar(title: const Text('Registrasi Toko'), surfaceTintColor: Colors.transparent),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: AppTheme.accentSurface, borderRadius: BorderRadius.circular(16)),
-              child: Row(
-                children: [
-                   const Icon(Icons.info_outline_rounded, color: AppTheme.accent),
-                   const SizedBox(width: 12),
-                   Expanded(child: Text('Daftarkan bisnis Anda. Kode PIN akan menjadi kunci masuk master toko.', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.accent))),
-                ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 24),
+              // Judul Tengah seperti referensi UI
+              Center(
+                child: Text(
+                  'REGISTER BARU',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.primary,
+                    letterSpacing: 1.5,
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 32),
-
-            Text('Nama Warung / Toko', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
-            const SizedBox(height: 8),
-            TextField(controller: _namaWarungCtrl, maxLength: 30, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(hintText: 'Warung Madura Jaya', prefixIcon: Icon(Icons.storefront_rounded, size: 20), fillColor: AppTheme.bg, filled: true, counterText: '')),
-            const SizedBox(height: 16),
-
-            Text('Nama Pemilik (Owner)', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
-            const SizedBox(height: 8),
-            TextField(controller: _namaOwnerCtrl, maxLength: 30, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(hintText: 'Budi Santoso', prefixIcon: Icon(Icons.person_rounded, size: 20), fillColor: AppTheme.bg, filled: true, counterText: '')),
-            const SizedBox(height: 16),
-
-            Text('ID Warung (Username Unik)', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
-            const SizedBox(height: 8),
-            TextField(controller: _idCtrl, maxLength: 20, inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))], decoration: const InputDecoration(hintText: 'warung_budi', prefixIcon: Icon(Icons.tag_rounded, size: 20), fillColor: AppTheme.bg, filled: true, counterText: '')),
-            const SizedBox(height: 16),
-
-            Text('PIN Akses Rahasia', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
-            const SizedBox(height: 8),
-            TextField(controller: _passCtrl, obscureText: true, keyboardType: TextInputType.number, maxLength: 6, inputFormatters: [FilteringTextInputFormatter.digitsOnly], decoration: const InputDecoration(hintText: 'Maks. 6 digit angka', prefixIcon: Icon(Icons.lock_outline_rounded, size: 20), fillColor: AppTheme.bg, filled: true, counterText: '')),
-            
-            const SizedBox(height: 40),
-            SizedBox(
-              width: double.infinity, height: 52,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _daftar,
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                child: _isLoading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : Text('Daftar Sekarang', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+              const SizedBox(height: 8),
+              Center(
+                child: Container(
+                  height: 2,
+                  width: 80,
+                  color: AppTheme.primary.withValues(alpha: 0.3),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 32),
+
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(color: AppTheme.accentSurface, borderRadius: BorderRadius.circular(16)),
+                child: Row(
+                  children: [
+                     const Icon(Icons.info_outline_rounded, color: AppTheme.accent),
+                     const SizedBox(width: 12),
+                     Expanded(child: Text('Daftarkan bisnis Anda. Kode Sandi ini akan menjadi kunci masuk master toko.', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.accent))),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              Text('Nama Warung / Toko', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
+              const SizedBox(height: 8),
+              TextField(controller: _namaWarungCtrl, maxLength: 30, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(hintText: 'Warung Madura Jaya', prefixIcon: Icon(Icons.storefront_rounded, size: 20), fillColor: AppTheme.bg, filled: true, counterText: '')),
+              const SizedBox(height: 16),
+
+              Text('Nama Pemilik (Owner)', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
+              const SizedBox(height: 8),
+              TextField(controller: _namaOwnerCtrl, maxLength: 30, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(hintText: 'Budi Santoso', prefixIcon: Icon(Icons.person_rounded, size: 20), fillColor: AppTheme.bg, filled: true, counterText: '')),
+              const SizedBox(height: 16),
+
+              Text('ID Warung (Username Unik)', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
+              const SizedBox(height: 8),
+              TextField(controller: _idCtrl, maxLength: 20, inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))], decoration: const InputDecoration(hintText: 'warung_budi', prefixIcon: Icon(Icons.tag_rounded, size: 20), fillColor: AppTheme.bg, filled: true, counterText: '')),
+              const SizedBox(height: 16),
+
+              Text('Nomor HP (Opsional)', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
+              const SizedBox(height: 8),
+              TextField(controller: _noHpCtrl, keyboardType: TextInputType.phone, maxLength: 15, inputFormatters: [FilteringTextInputFormatter.digitsOnly], decoration: const InputDecoration(hintText: '081234567890', prefixIcon: Icon(Icons.phone_rounded, size: 20), fillColor: AppTheme.bg, filled: true, counterText: '')),
+              const SizedBox(height: 16),
+
+              Text('Kata Sandi', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
+              const SizedBox(height: 8),
+              TextField(controller: _passCtrl, obscureText: true, decoration: const InputDecoration(hintText: 'Minimal 6 karakter alfanumerik', prefixIcon: Icon(Icons.lock_outline_rounded, size: 20), fillColor: AppTheme.bg, filled: true, counterText: '')),
+              
+              const SizedBox(height: 40),
+              SizedBox(
+                width: double.infinity, height: 52,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _daftar,
+                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  child: _isLoading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : Text('Daftar Sekarang', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              // Tombol Kembali ke Login pengganti AppBar Back Button
+              Center(
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    'Batal, Kembali ke Login',
+                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.textMuted),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );

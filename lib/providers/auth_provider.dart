@@ -1,39 +1,82 @@
 // lib/providers/auth_provider.dart
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import '../services/database_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthProvider with ChangeNotifier {
   final DatabaseService _dbService = DatabaseService();
   UserModel? _currentUser;
+  bool _isLoading = false;
 
   UserModel? get currentUser => _currentUser;
-  bool get isAuthenticated => _currentUser != null;
-
-  // ============================================================================
-  // ---> JEMBATAN KOMPATIBILITAS UI (ADAPTER) <---
-  // ============================================================================
-  bool get isAuth => isAuthenticated;
+  bool get isLoading => _isLoading;
+  bool get isAuth => _currentUser != null; // Cek apakah ada user yang login
+  
+  // Bantuan pengecekan role untuk UI
   bool get isOwner => _currentUser?.role == 'owner';
   bool get isPegawai => _currentUser?.role == 'pegawai';
 
-  Future<void> autoLogin() async {
-    await Future.delayed(const Duration(milliseconds: 500));
+  Future<bool> login(String idWarung, String pin) async {
+    _isLoading = true;
+    notifyListeners(); 
+
+    final user = await _dbService.loginPegawai(idWarung, pin);
+
+    _isLoading = false;
+
+    if (user != null) {
+      _currentUser = user; 
+      
+      // Simpan sesi permanen
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('saved_id_warung', idWarung);
+      await prefs.setString('saved_pin', pin);
+      
+      notifyListeners(); 
+      return true; 
+    } else {
+      notifyListeners(); 
+      return false; 
+    }
   }
 
-  // Menjembatani UI Login lama yang belum dipisah
-  Future<bool> login(String idWarung, String sandi) async {
-    // 1. Coba login sebagai Owner (Sistem butuh email, kita akali dengan email dummy dari ID)
-    String dummyEmail = "${idWarung.toLowerCase()}@jagawarung.com";
-    bool isOwnerLogin = await loginOwner(dummyEmail, sandi);
-    if (isOwnerLogin) return true;
+  Future<bool> autoLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!prefs.containsKey('saved_id_warung') || !prefs.containsKey('saved_pin')) {
+      return false;
+    }
     
-    // 2. Jika gagal, berarti dia Pegawai. Coba login via PIN biasa.
-    return await loginPegawai(idWarung, sandi);
+    String idWarung = prefs.getString('saved_id_warung')!;
+    String pin = prefs.getString('saved_pin')!;
+    
+    // Login otomatis
+    final user = await _dbService.loginPegawai(idWarung, pin);
+    if (user != null) {
+      _currentUser = user;
+      notifyListeners();
+      return true;
+    } else {
+      await prefs.clear();
+      return false;
+    }
   }
 
-  void perbaruiProfilLokal(String namaBaru, [String? pinBaru]) {
+  Future<void> logout() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+    } catch (e) {
+      // Ignore if not signed in via Firebase
+    }
+    _currentUser = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    notifyListeners(); 
+  }
+
+  // --- Fungsi Tambahan: Update State Profil ---
+  void perbaruiProfilLokal(String namaBaru, String pinBaru) {
     if (_currentUser != null) {
       _currentUser = UserModel(
         idUser: _currentUser!.idUser,
@@ -73,11 +116,5 @@ class AuthProvider with ChangeNotifier {
     } catch (e) {
       return false;
     }
-  }
-
-  void logout() {
-    FirebaseAuth.instance.signOut(); 
-    _currentUser = null;
-    notifyListeners();
   }
 }

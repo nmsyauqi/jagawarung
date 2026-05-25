@@ -6,7 +6,7 @@ import '../models/shift_model.dart';
 import '../models/transaksi_model.dart';
 import '../models/user_model.dart';
 import '../models/warung_model.dart';
-import '../models/produk_model.dart'; 
+import '../models/produk_model.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -88,8 +88,7 @@ class DatabaseService {
       String uid = cred.user!.uid; 
 
       WarungModel warung = WarungModel(idWarung: idWarung, namaWarung: namaWarung, idOwner: uid);
-      UserModel owner = UserModel(idUser: uid, idWarung: idWarung, nama: namaOwner, role: 'owner', pin: 'auth', email: dummyEmail);
-      
+      UserModel owner = UserModel(idUser: uid, idWarung: idWarung, nama: namaOwner, role: 'owner', pin: 'auth', email: dummyEmail, noHp: extra);
       await Future.wait([
         _db.collection('warungs').doc(idWarung).set(warung.toMap()),
         _db.collection('users').doc(uid).set(owner.toMap()),
