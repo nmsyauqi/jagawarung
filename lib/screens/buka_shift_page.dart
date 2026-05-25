@@ -110,41 +110,93 @@ class _BukaShiftPageState extends State<BukaShiftPage> {
     final inisial = namaPegawai.isNotEmpty ? namaPegawai[0].toUpperCase() : 'P';
     final skrg = DateTime.now();
 
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: AppTheme.surface,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: false,
-        titleSpacing: 24, // Geser rapi selaras dengan padding body
-        title: Text(
-          'Buka Shift Baru',
-          style: GoogleFonts.plusJakartaSans(
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
-            color: AppTheme.textDark,
+    return WillPopScope(
+      onWillPop: () async {
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Keluar Aplikasi?'),
+            content: Text(isPemilik 
+                ? 'Apakah Anda yakin ingin keluar dari akun Owner?' 
+                : 'Tindakan ini akan me-logout akun Anda. Apakah Anda yakin ingin keluar?'),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text('Batal', style: GoogleFonts.inter(color: AppTheme.textMuted)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text('Logout', style: GoogleFonts.inter(color: AppTheme.danger, fontWeight: FontWeight.bold)),
+              ),
+            ],
           ),
+        );
+
+        if (confirm == true) {
+          context.read<ShiftProvider>().reset();
+          await context.read<AuthProvider>().logout();
+        }
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: AppTheme.surface,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          centerTitle: false,
+          titleSpacing: 24, // Geser rapi selaras dengan padding body
+          title: Text(
+            'Buka Shift Baru',
+            style: GoogleFonts.plusJakartaSans(
+              fontWeight: FontWeight.w700,
+              fontSize: 18,
+              color: AppTheme.textDark,
+            ),
+          ),
+          actions: [
+            TextButton.icon(
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Keluar Aplikasi?'),
+                    content: Text(isPemilik 
+                        ? 'Apakah Anda yakin ingin keluar dari akun Owner?' 
+                        : 'Tindakan ini akan me-logout akun Anda. Apakah Anda yakin ingin keluar?'),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: Text('Batal', style: GoogleFonts.inter(color: AppTheme.textMuted)),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        child: Text('Logout', style: GoogleFonts.inter(color: AppTheme.danger, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true) {
+                  context.read<ShiftProvider>().reset();
+                  await context.read<AuthProvider>().logout();
+                }
+              },
+              icon: const Icon(
+                Icons.logout_rounded,
+                size: 18,
+                color: AppTheme.textMuted,
+              ),
+              label: Text(
+                'Keluar',
+                style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textMuted),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
         ),
-        actions: [
-          TextButton.icon(
-            onPressed: () {
-              context.read<ShiftProvider>().reset();
-              context.read<AuthProvider>().logout();
-            },
-            icon: const Icon(
-              Icons.logout_rounded,
-              size: 18,
-              color: AppTheme.textMuted,
-            ),
-            label: Text(
-              'Keluar',
-              style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textMuted),
-            ),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -370,6 +422,6 @@ class _BukaShiftPageState extends State<BukaShiftPage> {
           ],
         ),
       ),
-    );
+    ));
   }
 }

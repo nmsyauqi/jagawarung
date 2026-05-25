@@ -290,7 +290,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             ),
 
             // Memberi Jarak Karena Kartu Mengapung
-            const SizedBox(height: 90),
+            const SizedBox(height: 140),
 
             // Konten Bawah
             Padding(
@@ -383,15 +383,27 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                     border: Border.all(color: AppTheme.border),
                   ),
                   child: ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surfaceDim,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.fastfood_rounded,
-                        color: AppTheme.primary,
+                    leading: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        'https://loremflickr.com/100/100/${produk.namaProduk.replaceAll(' ', ',')},food',
+                        width: 48,
+                        height: 48,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: AppTheme.surfaceDim,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.fastfood_rounded,
+                              color: AppTheme.primary,
+                            ),
+                          );
+                        },
                       ),
                     ),
                     title: Text(

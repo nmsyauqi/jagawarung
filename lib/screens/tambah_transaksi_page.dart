@@ -342,16 +342,51 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
                               children: _keranjangCount.keys.map((id) {
                                 final p = _keranjangProduk[id]!;
                                 final qty = _keranjangCount[id]!;
-                                return InputChip(
-                                  label: Text("${p.namaProduk} (x$qty)"),
-                                  onDeleted: () => _kurangiDariKeranjang(id),
-                                  deleteIconColor: AppTheme.danger,
-                                  backgroundColor: Colors.white,
-                                  labelStyle: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                );
+                                  return Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(color: Colors.grey.shade300),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        // Minus Button (Kiri)
+                                        InkWell(
+                                          onTap: () => _kurangiDariKeranjang(id),
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: BoxDecoration(
+                                              color: AppTheme.danger.withValues(alpha: 0.1),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(Icons.remove, size: 16, color: AppTheme.danger),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        
+                                        // Text Name (xQty)
+                                        Text("${p.namaProduk} (x$qty)", style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
+                                        
+                                        const SizedBox(width: 8),
+                                        // Plus Button (Kanan)
+                                        InkWell(
+                                          onTap: () => _tambahKeKeranjang(p),
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: BoxDecoration(
+                                              color: AppTheme.primary.withValues(alpha: 0.1),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(Icons.add, size: 16, color: AppTheme.primary),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
                               }).toList(),
                             ),
                           ],

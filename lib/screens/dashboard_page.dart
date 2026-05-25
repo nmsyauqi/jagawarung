@@ -294,7 +294,36 @@ class _DashboardPageState extends State<DashboardPage> {
     final saldoSeharusnya = s.saldoAwal + targetProvider.totalUangMasuk;
     final listTx = targetProvider.listTransaksi;
 
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: () async {
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Keluar Aplikasi?'),
+            content: Text(p_isPemilik 
+                ? 'Apakah Anda yakin ingin keluar dari akun Owner?' 
+                : 'Tindakan ini akan me-logout akun Anda. Apakah Anda yakin ingin keluar?'),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text('Batal', style: GoogleFonts.inter(color: AppTheme.textMuted)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text('Logout', style: GoogleFonts.inter(color: AppTheme.danger, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+
+        if (confirm == true) {
+          await authProvider.logout();
+          return false; // False karena WrapperScreen akan otomatis mengubah rute ke login jika currentUser null
+        }
+        return false;
+      },
+      child: Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: AppTheme.surface,
@@ -742,7 +771,7 @@ class _DashboardPageState extends State<DashboardPage> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _statItem(String label, String value, IconData icon, Color color) {
@@ -919,15 +948,27 @@ class _DashboardPageState extends State<DashboardPage> {
                             border: Border.all(color: AppTheme.border),
                           ),
                           child: ListTile(
-                            leading: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: AppTheme.surfaceDim,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.fastfood_rounded,
-                                color: AppTheme.primary,
+                            leading: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                'https://loremflickr.com/100/100/${produk.namaProduk.replaceAll(' ', ',')},food',
+                                width: 48,
+                                height: 48,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: 48,
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.surfaceDim,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(
+                                      Icons.fastfood_rounded,
+                                      color: AppTheme.primary,
+                                    ),
+                                  );
+                                },
                               ),
                             ),
                             title: Text(

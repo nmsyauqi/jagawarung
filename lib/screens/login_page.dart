@@ -170,7 +170,7 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
   bool _isLoading = false;
   bool _obscureText = true;
   bool _isOwnerMode = false; // Mode split (Default: Pegawai)
-
+  bool _rememberMe = true;
   @override
   void dispose() {
     _idWarungCtrl.dispose();
@@ -212,102 +212,199 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
 
   @override
   Widget build(BuildContext context) {
+    final darkBlue = const Color(0xFF0F172A);
+    final lightPurple = const Color(0xFFEFF1F9);
+    final amber = Colors.amber;
+
     return Scaffold(
-      backgroundColor: AppTheme.surfaceElevated,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.textDark),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 16),
-              Text('Selamat Datang!', style: GoogleFonts.plusJakartaSans(fontSize: 32, fontWeight: FontWeight.w800, color: AppTheme.textDark)),
-              const SizedBox(height: 8),
-              Text('Silakan masuk dengan ID Warung dan kata sandi Anda.', style: GoogleFonts.inter(fontSize: 15, color: AppTheme.textMuted)),
-              const SizedBox(height: 48),
-
-              // Form Input
-              TextField(
-                controller: _idWarungCtrl,
-                style: GoogleFonts.inter(fontSize: 15),
-                decoration: InputDecoration(
-                  hintText: 'ID Warung (Username)',
-                  fillColor: Colors.white,
-                  filled: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[300]!)),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.primary)),
-                  prefixIcon: const Icon(Icons.storefront_outlined, color: AppTheme.textMuted),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _passCtrl,
-                obscureText: _obscureText,
-                keyboardType: _isOwnerMode ? TextInputType.text : TextInputType.number,
-                inputFormatters: _isOwnerMode ? [] : [FilteringTextInputFormatter.digitsOnly],
-                style: GoogleFonts.inter(fontSize: 15),
-                decoration: InputDecoration(
-                  hintText: _isOwnerMode ? 'Kata Sandi Owner' : 'PIN Kasir (6-digit)',
-                  fillColor: Colors.white,
-                  filled: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[300]!)),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.primary)),
-                  prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppTheme.textMuted),
-                  suffixIcon: IconButton(
-                    icon: Icon(_obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: AppTheme.textMuted),
-                    onPressed: () => setState(() => _obscureText = !_obscureText),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Toggle Mode Button
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _isOwnerMode = !_isOwnerMode;
-                      _passCtrl.clear();
-                    });
-                  },
-                  child: Text(
-                    _isOwnerMode ? 'Masuk sebagai Kasir?' : 'Masuk sebagai Owner?',
-                    style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.primary),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Button
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _prosesMasuk,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 0,
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : Text('Masuk', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
-                ),
-              ),
-            ],
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // Kanan bawah light purple shape
+          Positioned(
+            right: -100,
+            bottom: -50,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(color: lightPurple, shape: BoxShape.circle),
+            ),
           ),
-        ),
+          // Kiri bawah light purple shape
+          Positioned(
+            left: -100,
+            bottom: -150,
+            child: Container(
+              width: 350,
+              height: 350,
+              decoration: BoxDecoration(color: lightPurple, shape: BoxShape.circle),
+            ),
+          ),
+          // Kanan atas light purple shape
+          Positioned(
+            right: -80,
+            top: 150,
+            child: Container(
+              width: 250,
+              height: 250,
+              decoration: BoxDecoration(color: lightPurple, shape: BoxShape.circle),
+            ),
+          ),
+          // Dark blue circle top right
+          Positioned(
+            right: 40,
+            top: -20,
+            child: Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(color: darkBlue, shape: BoxShape.circle),
+            ),
+          ),
+          // Yellow triangle top left
+          Positioned(
+            left: 40,
+            top: 40,
+            child: Transform.rotate(
+              angle: 3.14159,
+              child: Icon(Icons.change_history_rounded, size: 50, color: amber),
+            ),
+          ),
+          // Dots grid top center
+          Positioned(
+            top: 20,
+            left: MediaQuery.of(context).size.width / 2 - 20,
+            child: Column(
+              children: List.generate(4, (i) => Row(
+                children: List.generate(5, (j) => Padding(
+                  padding: const EdgeInsets.all(4.0),
+                  child: Container(width: 5, height: 5, decoration: BoxDecoration(color: darkBlue, shape: BoxShape.circle)),
+                )),
+              )),
+            ),
+          ),
+          // Dots grid top right
+          Positioned(
+            top: 100,
+            right: 20,
+            child: Column(
+              children: List.generate(3, (i) => Row(
+                children: List.generate(3, (j) => Padding(
+                  padding: const EdgeInsets.all(4.0),
+                  child: Container(width: 6, height: 6, decoration: BoxDecoration(color: amber, shape: BoxShape.circle)),
+                )),
+              )),
+            ),
+          ),
+
+          SafeArea(
+            child: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 100), // Spacing dari atas
+                        Text('Login', style: GoogleFonts.poppins(fontSize: 32, fontWeight: FontWeight.bold, color: darkBlue)),
+                        const SizedBox(height: 32),
+
+                        // Input ID Warung
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 5))],
+                          ),
+                          child: TextField(
+                            controller: _idWarungCtrl,
+                            style: GoogleFonts.poppins(fontSize: 14),
+                            decoration: InputDecoration(
+                              hintText: 'ID Warung (Username)',
+                              hintStyle: GoogleFonts.poppins(color: Colors.grey[400], fontSize: 13),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                              border: InputBorder.none,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Input Password / PIN
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 5))],
+                          ),
+                          child: TextField(
+                            controller: _passCtrl,
+                            obscureText: _obscureText,
+                            keyboardType: _isOwnerMode ? TextInputType.text : TextInputType.number,
+                            inputFormatters: _isOwnerMode ? [] : [FilteringTextInputFormatter.digitsOnly],
+                            style: GoogleFonts.poppins(fontSize: 14),
+                            decoration: InputDecoration(
+                              hintText: _isOwnerMode ? 'Kata Sandi Owner' : 'PIN Kasir (6-digit)',
+                              hintStyle: GoogleFonts.poppins(color: Colors.grey[400], fontSize: 13),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                              border: InputBorder.none,
+                              suffixIcon: IconButton(
+                                icon: Icon(_obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: Colors.grey[400]),
+                                onPressed: () => setState(() => _obscureText = !_obscureText),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Toggle Mode Split
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _isOwnerMode = !_isOwnerMode;
+                                _passCtrl.clear();
+                              });
+                            },
+                            child: Text(
+                              _isOwnerMode ? 'Masuk sebagai Kasir?' : 'Masuk sebagai Owner?',
+                              style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: darkBlue),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 48),
+
+                        // Login Button
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _prosesMasuk,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: darkBlue,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              elevation: 0,
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                : Text('Login', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 40),
+                      ],
+                    ),
+                  ),
+                ),
+                // Footer Version
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Text('v1.0.0', style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey[400])),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
