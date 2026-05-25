@@ -6,6 +6,7 @@ import '../models/transaksi_model.dart';
 import '../models/user_model.dart';
 import '../models/warung_model.dart';
 import '../models/produk_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -124,12 +125,13 @@ class DatabaseService {
     }
   }
   
-  Future<UserModel?> loginUser(String idWarung, String pin) async {
+  Future<UserModel?> loginPegawai(String idWarung, String pin) async {
     try {
       final querySnapshot = await _db
           .collection('users')
           .where('id_warung', isEqualTo: idWarung)
           .where('pin', isEqualTo: pin)
+          .where('role', isEqualTo: 'pegawai')
           .limit(1)
           .get();
 
@@ -139,20 +141,50 @@ class DatabaseService {
         return null; 
       }
     } catch (e) {
-      debugPrint("❌ Error saat login: $e");
+      debugPrint("❌ Error saat login pegawai: $e");
       return null;
     }
   }
 
-  Future<bool> registerWarungDanOwner(String namaWarung, String namaOwner, String idWarung, String pin) async {
+  Future<UserModel?> getUserById(String uid) async {
+    try {
+      final doc = await _db.collection('users').doc(uid).get();
+      if (doc.exists) {
+        return UserModel.fromMap(doc.data()!);
+      }
+    } catch (e) {
+      debugPrint("❌ Error getUserById: $e");
+    }
+    return null;
+  }
+
+  Future<bool> registerWarungDanOwner(String namaWarung, String namaOwner, String idWarung, String password, [String? noHp]) async {
     try {
       var cekWarung = await _db.collection('warungs').doc(idWarung).get();
       if(cekWarung.exists) return false; 
 
-      String idUser = "OWN-${DateTime.now().millisecondsSinceEpoch}";
-      WarungModel warung = WarungModel(idWarung: idWarung, namaWarung: namaWarung, idOwner: idUser);
-      UserModel owner = UserModel(idUser: idUser, idWarung: idWarung, nama: namaOwner, role: 'owner', pin: pin);
+      // 1. Buat akun di Firebase Auth
+      final dummyEmail = "$idWarung@jagawarung.com";
+      final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: dummyEmail, 
+        password: password
+      );
+      
+      final idUser = userCredential.user!.uid;
 
+      // 2. Siapkan data Firestore
+      WarungModel warung = WarungModel(idWarung: idWarung, namaWarung: namaWarung, idOwner: idUser);
+      UserModel owner = UserModel(
+        idUser: idUser, 
+        idWarung: idWarung, 
+        nama: namaOwner, 
+        role: 'owner', 
+        email: dummyEmail,
+        noHp: noHp,
+        // PIN dikosongkan karena Owner tidak pakai PIN
+      );
+
+      // 3. Simpan ke Firestore
       await Future.wait([
         _db.collection('warungs').doc(idWarung).set(warung.toMap()),
         _db.collection('users').doc(idUser).set(owner.toMap()),
