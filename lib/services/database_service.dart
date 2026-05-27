@@ -179,8 +179,10 @@ class DatabaseService {
 
   Future<bool> tambahProduk(ProdukModel produk) async {
     try {
-      var cek = await _db.collection('produks').where('id_warung', isEqualTo: produk.idWarung).where('barcode', isEqualTo: produk.barcode).get();
-      if (cek.docs.isNotEmpty) return false; 
+      if (produk.barcode != null && produk.barcode!.isNotEmpty) {
+        var cek = await _db.collection('produks').where('id_warung', isEqualTo: produk.idWarung).where('barcode', isEqualTo: produk.barcode).get();
+        if (cek.docs.isNotEmpty) return false; 
+      }
       await _db.collection('produks').doc(produk.idProduk).set(produk.toMap());
       return true;
     } catch (e) { return false; }
@@ -205,7 +207,7 @@ class DatabaseService {
   }
 
   Stream<QuerySnapshot> streamRekapShift(String idWarung) {
-    return _db.collection('shifts').where('id_warung', isEqualTo: idWarung).orderBy('waktu_mulai', descending: true).snapshots();
+    return _db.collection('shifts').where('id_warung', isEqualTo: idWarung).snapshots();
   }
 
   Stream<QuerySnapshot> streamPegawai(String idWarung) {
@@ -222,6 +224,11 @@ class DatabaseService {
 
   Future<bool> updateProfilToko(String idWarung, String idOwner, String namaWarungBaru, String namaOwnerBaru, String pinBaru) async {
     try {
+      if (pinBaru != 'auth' && pinBaru.length >= 6) {
+        if (_auth.currentUser != null && _auth.currentUser!.uid == idOwner) {
+          await _auth.currentUser!.updatePassword(pinBaru);
+        }
+      }
       await Future.wait([
         _db.collection('warungs').doc(idWarung).update({'nama_warung': namaWarungBaru}),
         _db.collection('users').doc(idOwner).update({'nama': namaOwnerBaru, 'pin': pinBaru}),
