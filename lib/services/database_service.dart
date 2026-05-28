@@ -7,6 +7,7 @@ import '../models/transaksi_model.dart';
 import '../models/user_model.dart';
 import '../models/warung_model.dart';
 import '../models/produk_model.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -75,20 +76,17 @@ class DatabaseService {
     } catch (e) { return null; }
   }
 
-  // Menjembatani UI lama (4 parameter) dengan Kebutuhan Auth baru (Butuh Email)
-  Future<bool> registerWarungDanOwner(String namaWarung, String namaOwner, String idWarung, String password, [String? extra]) async {
+  // Registrasi Owner dengan Akun Google
+  Future<bool> registerWarungDanOwner(String namaWarung, String namaOwner, String idWarung, User firebaseUser, [String? extra]) async {
     try {
       var cekWarung = await _db.collection('warungs').doc(idWarung).get();
       if(cekWarung.exists) return false; 
 
-      // Pembuatan Email Dummy agar Firebase Auth tidak error
-      String dummyEmail = "${idWarung.toLowerCase()}@jagawarung.com";
-
-      UserCredential cred = await _auth.createUserWithEmailAndPassword(email: dummyEmail, password: password);
-      String uid = cred.user!.uid; 
+      String uid = firebaseUser.uid; 
+      String email = firebaseUser.email ?? "";
 
       WarungModel warung = WarungModel(idWarung: idWarung, namaWarung: namaWarung, idOwner: uid);
-      UserModel owner = UserModel(idUser: uid, idWarung: idWarung, nama: namaOwner, role: 'owner', pin: 'auth', email: dummyEmail, noHp: extra);
+      UserModel owner = UserModel(idUser: uid, idWarung: idWarung, nama: namaOwner, role: 'owner', pin: 'google', email: email, noHp: extra);
       await Future.wait([
         _db.collection('warungs').doc(idWarung).set(warung.toMap()),
         _db.collection('users').doc(uid).set(owner.toMap()),
@@ -97,6 +95,26 @@ class DatabaseService {
     } catch (e) {
       debugPrint("❌ Error Regis Owner Auth: $e");
       return false;
+    }
+  }
+
+  // Google Sign-In helper
+  Future<User?> signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) return null; // Dibatalkan oleh user
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      UserCredential userCredential = await _auth.signInWithCredential(credential);
+      return userCredential.user;
+    } catch (e) {
+      debugPrint("❌ Error Google Sign In: $e");
+      return null;
     }
   }
 
@@ -183,6 +201,8 @@ class DatabaseService {
         var cek = await _db.collection('produks').where('id_warung', isEqualTo: produk.idWarung).where('barcode', isEqualTo: produk.barcode).get();
         if (cek.docs.isNotEmpty) return false; 
       }
+      var cekKembar = await _db.collection('produks').where('id_warung', isEqualTo: produk.idWarung).where('nama_produk', isEqualTo: produk.namaProduk).where('harga', isEqualTo: produk.harga).get();
+      if (cekKembar.docs.isNotEmpty) return false;
       await _db.collection('produks').doc(produk.idProduk).set(produk.toMap());
       return true;
     } catch (e) { return false; }
@@ -222,16 +242,11 @@ class DatabaseService {
     } catch (e) { return 'Error Memuat Data'; }
   }
 
-  Future<bool> updateProfilToko(String idWarung, String idOwner, String namaWarungBaru, String namaOwnerBaru, String pinBaru) async {
+  Future<bool> updateProfilToko(String idWarung, String idOwner, String namaWarungBaru, String namaOwnerBaru) async {
     try {
-      if (pinBaru != 'auth' && pinBaru.length >= 6) {
-        if (_auth.currentUser != null && _auth.currentUser!.uid == idOwner) {
-          await _auth.currentUser!.updatePassword(pinBaru);
-        }
-      }
       await Future.wait([
         _db.collection('warungs').doc(idWarung).update({'nama_warung': namaWarungBaru}),
-        _db.collection('users').doc(idOwner).update({'nama': namaOwnerBaru, 'pin': pinBaru}),
+        _db.collection('users').doc(idOwner).update({'nama': namaOwnerBaru}),
       ]);
       return true;
     } catch (e) { return false; }

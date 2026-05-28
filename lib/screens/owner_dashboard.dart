@@ -1,5 +1,6 @@
 // lib/screens/owner_dashboard.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -464,6 +465,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   void _showTambahProdukDialog(String idWarung) {
     final namaCtrl = TextEditingController();
     final hargaCtrl = TextEditingController();
+    final barcodeCtrl = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -484,6 +486,13 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 labelText: 'Harga (Rp)',
+                labelStyle: TextStyle(color: Colors.grey.shade500),
+              ),
+            ),
+            TextField(
+              controller: barcodeCtrl,
+              decoration: InputDecoration(
+                labelText: 'Barcode (Opsional)',
                 labelStyle: TextStyle(color: Colors.grey.shade500),
               ),
             ),
@@ -509,6 +518,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                 idWarung: idWarung,
                 namaProduk: namaCtrl.text,
                 harga: hargaBersih,
+                barcode: barcodeCtrl.text.isEmpty ? null : barcodeCtrl.text,
               );
               await _dbService.tambahProduk(produkBaru);
               if (ctx.mounted) Navigator.pop(ctx);
@@ -523,6 +533,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   void _showEditProdukDialog(ProdukModel produk) {
     final namaCtrl = TextEditingController(text: produk.namaProduk);
     final hargaCtrl = TextEditingController(text: produk.harga.toString());
+    final barcodeCtrl = TextEditingController(text: produk.barcode ?? '');
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -546,6 +557,13 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                 labelStyle: TextStyle(color: Colors.grey.shade500),
               ),
             ),
+            TextField(
+              controller: barcodeCtrl,
+              decoration: InputDecoration(
+                labelText: 'Barcode (Opsional)',
+                labelStyle: TextStyle(color: Colors.grey.shade500),
+              ),
+            ),
           ],
         ),
         actions: [
@@ -566,6 +584,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                 produk.idProduk,
                 namaCtrl.text,
                 hargaBersih,
+                barcodeBaru: barcodeCtrl.text.isEmpty ? null : barcodeCtrl.text,
               );
               if (ctx.mounted) Navigator.pop(ctx);
             },
@@ -1240,7 +1259,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
 
             _infoRow(Icons.store, 'Nama Warung', namaWarung),
             const Divider(height: 32, color: AppTheme.borderLight),
-            _infoRow(Icons.badge, 'ID Warung (Username)', owner.idWarung),
+            _infoRow(Icons.badge, 'ID Warung (Username)', owner.idWarung, isCopiable: true),
             const Divider(height: 32, color: AppTheme.borderLight),
             _infoRow(Icons.person, 'Nama Pemilik', owner.nama),
             // Baris PIN dihilangkan dari tampilan depan agar aman, tetapi bisa diubah melalui tombol edit
@@ -1250,7 +1269,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     );
   }
 
-  Widget _infoRow(IconData icon, String title, String value) {
+  Widget _infoRow(IconData icon, String title, String value, {bool isCopiable = false}) {
     return Row(
       children: [
         Container(
@@ -1284,6 +1303,17 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             ],
           ),
         ),
+        if (isCopiable)
+          IconButton(
+            icon: const Icon(Icons.copy_rounded, color: AppTheme.primary),
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: value));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('$title disalin ke clipboard!')),
+              );
+            },
+            tooltip: 'Salin',
+          ),
       ],
     );
   }
@@ -1561,7 +1591,6 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   void _showUbahProfilToko(UserModel owner, String namaWarungLama) {
     final namaWarungCtrl = TextEditingController(text: namaWarungLama);
     final namaOwnerCtrl = TextEditingController(text: owner.nama);
-    final pinCtrl = TextEditingController(text: owner.pin);
     bool loading = false;
 
     showDialog(
@@ -1589,16 +1618,6 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                       labelStyle: TextStyle(color: Colors.grey.shade500),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: pinCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'PIN Akses Bos',
-                      labelStyle: TextStyle(color: Colors.grey.shade500),
-                    ),
-                    maxLength: 6,
-                  ),
                 ],
               ),
             ),
@@ -1612,9 +1631,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                     ? null
                     : () async {
                         if (namaWarungCtrl.text.isEmpty ||
-                            namaOwnerCtrl.text.isEmpty ||
-                            pinCtrl.text.isEmpty)
-                          return;
+                            namaOwnerCtrl.text.isEmpty) return;
                         setModalState(() => loading = true);
 
                         bool sukses = await _dbService.updateProfilToko(
@@ -1622,19 +1639,18 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                           owner.idUser,
                           namaWarungCtrl.text,
                           namaOwnerCtrl.text,
-                          pinCtrl.text,
                         );
 
                         if (sukses && mounted) {
                           context.read<AuthProvider>().perbaruiProfilLokal(
                             namaOwnerCtrl.text,
-                            pinCtrl.text,
+                            owner.pin ?? '',
                           );
                           setState(() {});
                           Navigator.pop(ctx);
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Profil berhasil diperbarui'),
+                              content: Text('Profil berhasil diperbarui.'),
                             ),
                           );
                         } else {

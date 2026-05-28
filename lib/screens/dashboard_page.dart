@@ -666,33 +666,6 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         child: Row(
           children: [
-            // ---> TOMBOL SCAN BARCODE (KAMERA ASLI) <---
-            SizedBox(
-              width: 56,
-              height: 56,
-              child: OutlinedButton(
-                onPressed: () {
-                  // _showBarcodeScannerDialog(s.idWarung); // <-- Simulasi dimatikan
-                  _openRealCameraScanner(s.idWarung);     // <-- Panggil kamera asli!
-                },
-                style: OutlinedButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  side: BorderSide(
-                    color: AppTheme.primary.withOpacity(0.4),
-                    width: 1.5,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: const Icon(
-                  Icons.qr_code_scanner_rounded,
-                  color: AppTheme.primary,
-                  size: 22,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
             Expanded(
               flex: 3,
               child: SizedBox(

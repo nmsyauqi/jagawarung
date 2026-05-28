@@ -43,6 +43,18 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<bool> autoLogin() async {
+    // 1. Cek sesi Owner via Firebase Auth
+    final fbUser = FirebaseAuth.instance.currentUser;
+    if (fbUser != null) {
+      final user = await _dbService.getOwnerProfile(fbUser.uid);
+      if (user != null) {
+        _currentUser = user;
+        notifyListeners();
+        return true;
+      }
+    }
+
+    // 2. Cek sesi Pegawai via SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     if (!prefs.containsKey('saved_id_warung') || !prefs.containsKey('saved_pin')) {
       return false;
@@ -51,7 +63,7 @@ class AuthProvider with ChangeNotifier {
     String idWarung = prefs.getString('saved_id_warung')!;
     String pin = prefs.getString('saved_pin')!;
     
-    // Login otomatis
+    // Login otomatis Pegawai
     final user = await _dbService.loginPegawai(idWarung, pin);
     if (user != null) {
       _currentUser = user;
@@ -101,15 +113,18 @@ class AuthProvider with ChangeNotifier {
     return false;
   }
 
-  Future<bool> loginOwner(String email, String password) async {
+  Future<bool> loginOwnerGoogle() async {
     try {
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
-      if (userCredential.user != null) {
-        final user = await _dbService.getOwnerProfile(userCredential.user!.uid);
+      final fbUser = await _dbService.signInWithGoogle();
+      if (fbUser != null) {
+        final user = await _dbService.getOwnerProfile(fbUser.uid);
         if (user != null) {
           _currentUser = user;
           notifyListeners();
           return true;
+        } else {
+          // Jika belum terdaftar, logout lagi dari firebase
+          await FirebaseAuth.instance.signOut();
         }
       }
       return false;

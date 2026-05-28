@@ -169,7 +169,6 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
   final _passCtrl = TextEditingController();
   bool _isLoading = false;
   bool _obscureText = true;
-  bool _isOwnerMode = false; // Mode split (Default: Pegawai)
 
   @override
   void dispose() {
@@ -187,13 +186,7 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
     final auth = context.read<AuthProvider>();
     bool sukses = false;
 
-    if (_isOwnerMode) {
-      // Dummy Email format untuk Firebase Auth
-      final dummyEmail = "${idWarung.toLowerCase()}@jagawarung.com";
-      sukses = await auth.loginOwner(dummyEmail, sandi);
-    } else {
-      sukses = await auth.loginPegawai(idWarung, sandi);
-    }
+    sukses = await auth.loginPegawai(idWarung, sandi);
 
     if (!mounted) return;
 
@@ -252,11 +245,11 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
               TextField(
                 controller: _passCtrl,
                 obscureText: _obscureText,
-                keyboardType: _isOwnerMode ? TextInputType.text : TextInputType.number,
-                inputFormatters: _isOwnerMode ? [] : [FilteringTextInputFormatter.digitsOnly],
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 style: GoogleFonts.inter(fontSize: 15),
                 decoration: InputDecoration(
-                  hintText: _isOwnerMode ? 'Kata Sandi Owner' : 'PIN Kasir (6-digit)',
+                  hintText: 'PIN Kasir (6-digit)',
                   fillColor: Colors.white,
                   filled: true,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -275,14 +268,21 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _isOwnerMode = !_isOwnerMode;
-                      _passCtrl.clear();
-                    });
+                  onPressed: () async {
+                    setState(() => _isLoading = true);
+                    final auth = context.read<AuthProvider>();
+                    bool sukses = await auth.loginOwnerGoogle();
+                    if (!mounted) return;
+                    if (sukses) {
+                      setState(() => _isLoading = false);
+                      Navigator.of(context).pop();
+                    } else {
+                      setState(() => _isLoading = false);
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal login. Pastikan akun terdaftar.')));
+                    }
                   },
                   child: Text(
-                    _isOwnerMode ? 'Masuk sebagai Kasir?' : 'Masuk sebagai Owner?',
+                    'Masuk sebagai Owner?',
                     style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.primary),
                   ),
                 ),
@@ -326,39 +326,41 @@ class _DaftarWarungPageState extends State<DaftarWarungPage> {
   final _namaWarungCtrl = TextEditingController();
   final _namaOwnerCtrl = TextEditingController();
   final _noHpCtrl = TextEditingController(); // Input HP Opsional dari Backend
-  final _idCtrl = TextEditingController();
-  final _passCtrl = TextEditingController();
   final DatabaseService _dbService = DatabaseService();
   bool _isLoading = false;
 
   void _daftar() async {
-    if (_namaWarungCtrl.text.isEmpty || _namaOwnerCtrl.text.isEmpty || _idCtrl.text.isEmpty || _passCtrl.text.isEmpty) return;
+    if (_namaWarungCtrl.text.isEmpty || _namaOwnerCtrl.text.isEmpty) return;
 
     setState(() => _isLoading = true);
     
-    // Mesin buatan teman Backend dimasukkan di sini:
+    final fbUser = await _dbService.signInWithGoogle();
+    if (fbUser == null) {
+      setState(() => _isLoading = false);
+      return; 
+    }
+
+    String randomId = "WRG-${fbUser.uid.substring(0, 8).toUpperCase()}";
+
     bool sukses = await _dbService.registerWarungDanOwner(
       _namaWarungCtrl.text, 
       _namaOwnerCtrl.text, 
-      _idCtrl.text, 
-      _passCtrl.text,
-      _noHpCtrl.text // Opsional
+      randomId, 
+      fbUser,
+      _noHpCtrl.text 
     );
 
     if (!mounted) return;
     
     if (sukses) {
-      // Langsung login setelah sukses registrasi ke Firebase
-      final dummyEmail = "${_idCtrl.text.toLowerCase()}@jagawarung.com";
-      await context.read<AuthProvider>().loginOwner(dummyEmail, _passCtrl.text);
+      await context.read<AuthProvider>().autoLogin();
       if (!mounted) return;
       setState(() => _isLoading = false);
       
-      // Karena Wrapper akan handle otomatis, kita tinggalkan layar ini menuju Dashboard asali
       Navigator.of(context).pop();
     } else {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal! Cek koneksi atau ID Warung sudah terpakai.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal Mendaftar!')));
     }
   }
 
@@ -418,19 +420,9 @@ class _DaftarWarungPageState extends State<DaftarWarungPage> {
               TextField(controller: _namaOwnerCtrl, maxLength: 30, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(hintText: 'Budi Santoso', prefixIcon: Icon(Icons.person_rounded, size: 20), fillColor: AppTheme.bg, filled: true, counterText: '')),
               const SizedBox(height: 16),
 
-              Text('ID Warung (Username Unik)', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
-              const SizedBox(height: 8),
-              TextField(controller: _idCtrl, maxLength: 20, inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))], decoration: const InputDecoration(hintText: 'warung_budi', prefixIcon: Icon(Icons.tag_rounded, size: 20), fillColor: AppTheme.bg, filled: true, counterText: '')),
-              const SizedBox(height: 16),
-
               Text('Nomor HP (Opsional)', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
               const SizedBox(height: 8),
               TextField(controller: _noHpCtrl, keyboardType: TextInputType.phone, maxLength: 15, inputFormatters: [FilteringTextInputFormatter.digitsOnly], decoration: const InputDecoration(hintText: '081234567890', prefixIcon: Icon(Icons.phone_rounded, size: 20), fillColor: AppTheme.bg, filled: true, counterText: '')),
-              const SizedBox(height: 16),
-
-              Text('Kata Sandi', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
-              const SizedBox(height: 8),
-              TextField(controller: _passCtrl, obscureText: true, decoration: const InputDecoration(hintText: 'Minimal 6 karakter alfanumerik', prefixIcon: Icon(Icons.lock_outline_rounded, size: 20), fillColor: AppTheme.bg, filled: true, counterText: '')),
               
               const SizedBox(height: 40),
               SizedBox(
@@ -438,7 +430,7 @@ class _DaftarWarungPageState extends State<DaftarWarungPage> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _daftar,
                   style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                  child: _isLoading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : Text('Daftar Sekarang', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+                  child: _isLoading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : Text('Daftar & Sambungkan ke Google', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
                 ),
               ),
               const SizedBox(height: 16),

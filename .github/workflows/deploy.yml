@@ -1,0 +1,42 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: write
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          # you can specify a specific version if needed: flutter-version: '3.19.x'
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build Web App
+        # PENTING: Ganti "jagawarung" sesuai dengan nama repository GitHub Anda jika berbeda.
+        run: flutter build web --release --base-href "/jagawarung/"
+
+      - name: Handle GitHub Pages 404 Routing
+        run: cp build/web/index.html build/web/404.html
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web
+          # The deployment will be pushed to the 'gh-pages' branch automatically
