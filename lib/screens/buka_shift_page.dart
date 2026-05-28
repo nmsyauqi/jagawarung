@@ -161,7 +161,7 @@ class _BukaShiftPageState extends State<BukaShiftPage> {
                 borderRadius: BorderRadius.circular(AppTheme.r16),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primary.withOpacity(0.15),
+                    color: AppTheme.primary.withValues(alpha: 0.15),
                     blurRadius: 16,
                     offset: const Offset(0, 8),
                   )
@@ -327,8 +327,9 @@ class _BukaShiftPageState extends State<BukaShiftPage> {
                     validator: (val) {
                       final raw = _angkaMentah();
                       if (raw.isEmpty) return 'Saldo awal wajib diisi';
-                      if ((double.tryParse(raw) ?? 0) <= 0)
+                      if ((double.tryParse(raw) ?? 0) <= 0) {
                         return 'Saldo harus lebih dari Rp 0';
+                      }
                       return null;
                     },
                   ),

@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import '../services/database_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthProvider with ChangeNotifier {
   final DatabaseService _dbService = DatabaseService();
-  
   UserModel? _currentUser;
   bool _isLoading = false;
 
@@ -22,7 +22,7 @@ class AuthProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners(); 
 
-    final user = await _dbService.loginUser(idWarung, pin);
+    final user = await _dbService.loginPegawai(idWarung, pin);
 
     _isLoading = false;
 
@@ -43,6 +43,18 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<bool> autoLogin() async {
+    // 1. Cek sesi Owner via Firebase Auth
+    final fbUser = FirebaseAuth.instance.currentUser;
+    if (fbUser != null) {
+      final user = await _dbService.getOwnerProfile(fbUser.uid);
+      if (user != null) {
+        _currentUser = user;
+        notifyListeners();
+        return true;
+      }
+    }
+
+    // 2. Cek sesi Pegawai via SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     if (!prefs.containsKey('saved_id_warung') || !prefs.containsKey('saved_pin')) {
       return false;
@@ -51,8 +63,8 @@ class AuthProvider with ChangeNotifier {
     String idWarung = prefs.getString('saved_id_warung')!;
     String pin = prefs.getString('saved_pin')!;
     
-    // Login otomatis
-    final user = await _dbService.loginUser(idWarung, pin);
+    // Login otomatis Pegawai
+    final user = await _dbService.loginPegawai(idWarung, pin);
     if (user != null) {
       _currentUser = user;
       notifyListeners();
@@ -64,6 +76,11 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> logout() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+    } catch (e) {
+      // Ignore if not signed in via Firebase
+    }
     _currentUser = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
@@ -76,11 +93,43 @@ class AuthProvider with ChangeNotifier {
       _currentUser = UserModel(
         idUser: _currentUser!.idUser,
         idWarung: _currentUser!.idWarung,
-        role: _currentUser!.role,
         nama: namaBaru,
+        role: _currentUser!.role,
         pin: pinBaru,
+        email: _currentUser!.email,
       );
       notifyListeners();
+    }
+  }
+  // ============================================================================
+
+  Future<bool> loginPegawai(String idWarung, String pin) async {
+    final user = await _dbService.loginPegawai(idWarung, pin);
+    if (user != null) {
+      _currentUser = user;
+      notifyListeners();
+      return true;
+    }
+    return false;
+  }
+
+  Future<bool> loginOwnerGoogle() async {
+    try {
+      final fbUser = await _dbService.signInWithGoogle();
+      if (fbUser != null) {
+        final user = await _dbService.getOwnerProfile(fbUser.uid);
+        if (user != null) {
+          _currentUser = user;
+          notifyListeners();
+          return true;
+        } else {
+          // Jika belum terdaftar, logout lagi dari firebase
+          await FirebaseAuth.instance.signOut();
+        }
+      }
+      return false;
+    } catch (e) {
+      return false;
     }
   }
 }
