@@ -240,8 +240,7 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
   final _passCtrl = TextEditingController();
   bool _isLoading = false;
   bool _obscureText = true;
-  bool _isOwnerMode = false; // Mode split (Default: Pegawai)
-  bool _rememberMe = true;
+
   @override
   void dispose() {
     _idWarungCtrl.dispose();
@@ -256,15 +255,8 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
 
     setState(() => _isLoading = true);
     final auth = context.read<AuthProvider>();
-    bool sukses = false;
-
-    if (_isOwnerMode) {
-      // Dummy Email format untuk Firebase Auth
-      final dummyEmail = "$idWarung@jagawarung.com";
-      sukses = await auth.loginOwner(dummyEmail, sandi);
-    } else {
-      sukses = await auth.loginPegawai(idWarung, sandi);
-    }
+    
+    bool sukses = await auth.loginPegawai(idWarung, sandi);
 
     if (!mounted) return;
 
@@ -290,9 +282,7 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
   @override
   Widget build(BuildContext context) {
     final darkBlue = const Color(0xFF0F172A);
-    final lightPurple = const Color(
-      0xFFDDE4F2,
-    ); // Dibuat lebih gelap agar tidak terlihat cuma putih
+    final lightPurple = const Color(0xFFDDE4F2); // Dibuat lebih gelap
     final amber = Colors.amber;
 
     return Scaffold(
@@ -492,17 +482,11 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
                           child: TextField(
                             controller: _passCtrl,
                             obscureText: _obscureText,
-                            keyboardType: _isOwnerMode
-                                ? TextInputType.text
-                                : TextInputType.number,
-                            inputFormatters: _isOwnerMode
-                                ? []
-                                : [FilteringTextInputFormatter.digitsOnly],
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                             style: GoogleFonts.poppins(fontSize: 14),
                             decoration: InputDecoration(
-                              hintText: _isOwnerMode
-                                  ? 'Kata Sandi Owner'
-                                  : 'PIN Kasir (6-digit)',
+                              hintText: 'PIN Kasir (6-digit)',
                               hintStyle: GoogleFonts.poppins(
                                 color: Colors.grey[400],
                                 fontSize: 13,
@@ -528,24 +512,29 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Toggle Mode Split
+                        // Google Auth Button
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _isOwnerMode = !_isOwnerMode;
-                                _passCtrl.clear();
-                              });
+                            onPressed: () async {
+                              setState(() => _isLoading = true);
+                              final auth = context.read<AuthProvider>();
+                              bool sukses = await auth.loginOwnerGoogle();
+                              if (!context.mounted) return;
+                              if (sukses) {
+                                setState(() => _isLoading = false);
+                                Navigator.of(context).pop();
+                              } else {
+                                setState(() => _isLoading = false);
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal login. Pastikan akun terdaftar.')));
+                              }
                             },
                             child: Text(
-                              _isOwnerMode
-                                  ? 'Masuk sebagai Kasir?'
-                                  : 'Masuk sebagai Owner?',
+                              'Masuk sebagai Owner?',
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: darkBlue,
+                                color: AppTheme.primary,
                               ),
                             ),
                           ),
@@ -575,7 +564,7 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
                                     ),
                                   )
                                 : Text(
-                                    'Login',
+                                    'Login Kasir',
                                     style: GoogleFonts.poppins(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
@@ -622,48 +611,41 @@ class DaftarWarungPage extends StatefulWidget {
 class _DaftarWarungPageState extends State<DaftarWarungPage> {
   final _namaWarungCtrl = TextEditingController();
   final _namaOwnerCtrl = TextEditingController();
-  final _noHpCtrl = TextEditingController(); // Input HP Opsional dari Backend
-  final _idCtrl = TextEditingController();
-  final _passCtrl = TextEditingController();
+  final _noHpCtrl = TextEditingController(); // Input HP Opsional
   final DatabaseService _dbService = DatabaseService();
   bool _isLoading = false;
 
   void _daftar() async {
-    if (_namaWarungCtrl.text.isEmpty ||
-        _namaOwnerCtrl.text.isEmpty ||
-        _idCtrl.text.isEmpty ||
-        _passCtrl.text.isEmpty)
-      return;
+    if (_namaWarungCtrl.text.isEmpty || _namaOwnerCtrl.text.isEmpty) return;
 
     setState(() => _isLoading = true);
+    
+    final fbUser = await _dbService.signInWithGoogle();
+    if (fbUser == null) {
+      if (mounted) setState(() => _isLoading = false);
+      return; 
+    }
 
-    // Mesin buatan teman Backend dimasukkan di sini:
+    String randomId = "WRG-${fbUser.uid.substring(0, 8).toUpperCase()}";
+
     bool sukses = await _dbService.registerWarungDanOwner(
-      _namaWarungCtrl.text,
-      _namaOwnerCtrl.text,
-      _idCtrl.text,
-      _passCtrl.text,
-      _noHpCtrl.text, // Opsional
+      _namaWarungCtrl.text, 
+      _namaOwnerCtrl.text, 
+      randomId, 
+      fbUser,
+      _noHpCtrl.text 
     );
 
     if (!mounted) return;
 
     if (sukses) {
-      // Langsung login setelah sukses registrasi ke Firebase
-      final dummyEmail = "${_idCtrl.text}@jagawarung.com";
-      await context.read<AuthProvider>().loginOwner(dummyEmail, _passCtrl.text);
+      await context.read<AuthProvider>().autoLogin();
       if (!mounted) return;
       setState(() => _isLoading = false);
-
-      // Karena Wrapper akan handle otomatis, kita tinggalkan layar ini menuju Dashboard asali
       Navigator.of(context).pop();
     } else {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Gagal! Cek koneksi atau ID Warung sudah terpakai.'),
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal Mendaftar!')));
     }
   }
 
@@ -715,7 +697,7 @@ class _DaftarWarungPageState extends State<DaftarWarungPage> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Daftarkan bisnis Anda. Kode Sandi ini akan menjadi kunci masuk master toko.',
+                        'Daftarkan bisnis Anda. Otentikasi akun Google Anda akan menjadi kunci master untuk masuk ke toko.',
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           color: AppTheme.accent,
@@ -774,31 +756,6 @@ class _DaftarWarungPageState extends State<DaftarWarungPage> {
               const SizedBox(height: 16),
 
               Text(
-                'ID Warung (Username Unik)',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textDark,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _idCtrl,
-                maxLength: 20,
-                inputFormatters: [
-                  FilteringTextInputFormatter.deny(RegExp(r'\s')),
-                ],
-                decoration: const InputDecoration(
-                  hintText: 'warung_budi',
-                  prefixIcon: Icon(Icons.tag_rounded, size: 20),
-                  fillColor: AppTheme.bg,
-                  filled: true,
-                  counterText: '',
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              Text(
                 'Nomor HP (Opsional)',
                 style: GoogleFonts.inter(
                   fontSize: 13,
@@ -820,30 +777,8 @@ class _DaftarWarungPageState extends State<DaftarWarungPage> {
                   counterText: '',
                 ),
               ),
-              const SizedBox(height: 16),
-
-              Text(
-                'Kata Sandi',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textDark,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _passCtrl,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  hintText: 'Minimal 6 karakter alfanumerik',
-                  prefixIcon: Icon(Icons.lock_outline_rounded, size: 20),
-                  fillColor: AppTheme.bg,
-                  filled: true,
-                  counterText: '',
-                ),
-              ),
-
               const SizedBox(height: 40),
+
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -865,7 +800,7 @@ class _DaftarWarungPageState extends State<DaftarWarungPage> {
                           ),
                         )
                       : Text(
-                          'Daftar Sekarang',
+                          'Daftar & Sambungkan ke Google',
                           style: GoogleFonts.inter(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -876,7 +811,6 @@ class _DaftarWarungPageState extends State<DaftarWarungPage> {
               ),
               const SizedBox(height: 16),
 
-              // Tombol Kembali ke Login pengganti AppBar Back Button
               Center(
                 child: TextButton(
                   onPressed: () => Navigator.pop(context),

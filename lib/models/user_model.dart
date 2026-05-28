@@ -2,7 +2,7 @@
 
 class UserModel {
   final String idUser;
-  final String idWarung; // Sebagai referensi warung tempat user ini bekerja/memiliki
+  final String idWarung;
   final String nama;
   final String role; // Isinya hanya: "owner" atau "pegawai"
   final String? pin; // Passcode 4-6 digit untuk login pegawai (opsional untuk owner)

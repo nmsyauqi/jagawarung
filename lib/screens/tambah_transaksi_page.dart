@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -9,6 +9,7 @@ import '../models/transaksi_model.dart';
 import '../models/produk_model.dart';
 import '../services/database_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 class TambahTransaksiPage extends StatefulWidget {
   final ProdukModel? produkAwal;
@@ -26,8 +27,9 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
   void initState() {
     super.initState();
     if (widget.produkAwal != null) {
-      _keranjangProduk[widget.produkAwal!.idProduk] = widget.produkAwal!;
-      _keranjangCount[widget.produkAwal!.idProduk] = 1;
+      _nominal = widget.produkAwal!.harga.toString();
+      _catatanCtrl.text = widget.produkAwal!.namaProduk;
+      _showNotes = true;
     }
   }
   final _desktopNominalCtrl =
@@ -35,9 +37,8 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
   bool _loading = false;
   bool _showNotes = false;
 
-  // -- Keranjang Hybrid --
-  final Map<String, int> _keranjangCount = {};
-  final Map<String, ProdukModel> _keranjangProduk = {};
+  final Map<String, int> _qtyKeranjang = {};
+  final Map<String, ProdukModel> _detailKeranjang = {};
 
   // Riwayat transaksi khusus selama membuka halaman ini
   final List<TransaksiModel> _riwayatSesiIni = [];
@@ -52,8 +53,9 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
   void _pressKey(String val) {
     setState(() {
       if (val == 'del') {
-        if (_nominal.isNotEmpty)
+        if (_nominal.isNotEmpty) {
           _nominal = _nominal.substring(0, _nominal.length - 1);
+        }
       } else if (val == '000') {
         if (_nominal.isNotEmpty && _nominal.length <= 10) _nominal += '000';
       } else {
@@ -62,21 +64,20 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
     });
   }
 
-  String get _formattedNominal {
-    if (_nominal.isEmpty) return '0';
-    final n = int.tryParse(_nominal) ?? 0;
-    return NumberFormat('#,###', 'id_ID').format(n);
-  }
+
 
   int get _totalKeranjang {
-    int sum = 0;
-    _keranjangCount.forEach((id, qty) {
-      sum += (_keranjangProduk[id]!.harga * qty);
+    int total = 0;
+    _qtyKeranjang.forEach((id, qty) {
+      final p = _detailKeranjang[id];
+      if (p != null) {
+        total += p.harga * qty;
+      }
     });
-    return sum;
+    return total;
   }
 
-  int get _totalManual {
+  int get _totalSemua {
     final tPlatform = Theme.of(context).platform;
     final isDesktop =
         tPlatform == TargetPlatform.windows ||
@@ -86,29 +87,47 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
     final valStr = isDesktop
         ? _desktopNominalCtrl.text.replaceAll('.', '')
         : _nominal;
-    return int.tryParse(valStr) ?? 0;
+    final manual = int.tryParse(valStr) ?? 0;
+    return manual + _totalKeranjang;
   }
 
-  int get _totalSemua => _totalKeranjang + _totalManual;
-
-  void _tambahKeKeranjang(ProdukModel p) {
+  void _tambahKuantitas(ProdukModel p) {
     setState(() {
-      _keranjangProduk[p.idProduk] = p;
-      _keranjangCount[p.idProduk] = (_keranjangCount[p.idProduk] ?? 0) + 1;
+      _qtyKeranjang[p.idProduk] = (_qtyKeranjang[p.idProduk] ?? 0) + 1;
+      _detailKeranjang[p.idProduk] = p;
     });
   }
 
-  void _kurangiDariKeranjang(String id) {
+  void _kurangKuantitas(ProdukModel p) {
     setState(() {
-      if (_keranjangCount.containsKey(id)) {
-        if (_keranjangCount[id]! > 1) {
-          _keranjangCount[id] = _keranjangCount[id]! - 1;
-        } else {
-          _keranjangCount.remove(id);
-          _keranjangProduk.remove(id);
-        }
+      int current = _qtyKeranjang[p.idProduk] ?? 0;
+      if (current > 1) {
+        _qtyKeranjang[p.idProduk] = current - 1;
+      } else {
+        _qtyKeranjang.remove(p.idProduk);
+        _detailKeranjang.remove(p.idProduk);
       }
     });
+  }
+
+  Future<void> _scanBarcode() async {
+    String? barcode = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ScannerOverlayWidget()),
+    );
+    if (barcode != null && barcode.isNotEmpty) {
+      if (!mounted) return;
+      final p = await DatabaseService().cariProdukByBarcode(
+        context.read<ShiftProvider>().activeShift!.idWarung, 
+        barcode
+      );
+      if (p != null && mounted) {
+        _tambahKuantitas(p);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${p.namaProduk} ditambahkan!')));
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Barang tidak ditemukan di katalog.')));
+      }
+    }
   }
 
   Future<void> _simpan() async {
@@ -117,24 +136,20 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
 
     setState(() => _loading = true);
     await Future.delayed(const Duration(milliseconds: 200));
+    if (!mounted) return;
 
-    // Bangun catatan transaksi gabungan
-    List<String> rincian = [];
-    _keranjangCount.forEach((id, qty) {
-      final p = _keranjangProduk[id]!;
-      rincian.add("${p.namaProduk} (x$qty)");
+    List<String> notes = [];
+    _qtyKeranjang.forEach((id, qty) {
+      final p = _detailKeranjang[id];
+      if (p != null) {
+        notes.add('${p.namaProduk} x$qty');
+      }
     });
-    if (_totalManual > 0) {
-      rincian.add(
-        "Manual: ${NumberFormat('#,###', 'id_ID').format(_totalManual)}",
-      );
+    String noteManual = _catatanCtrl.text.trim();
+    if (noteManual.isNotEmpty) {
+      notes.add('(Manual: $noteManual)');
     }
-
-    final customNote = _catatanCtrl.text.trim();
-    String noteFinal = rincian.join(', ');
-    if (customNote.isNotEmpty) {
-      noteFinal += noteFinal.isNotEmpty ? " | Note: $customNote" : customNote;
-    }
+    String noteFinal = notes.join(', ');
 
     final idTx = 'TX_${DateTime.now().millisecondsSinceEpoch}';
 
@@ -159,12 +174,12 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
     // Simpan ke riwayat sesi ini agar kasir bisa lihat, lalu reset input
     setState(() {
       _riwayatSesiIni.insert(0, trxLocal); // Masukkan di urutan teratas
-      _keranjangCount.clear();
-      _keranjangProduk.clear();
       _nominal = '';
       _desktopNominalCtrl.clear();
       _catatanCtrl.clear();
       _showNotes = false;
+      _qtyKeranjang.clear();
+      _detailKeranjang.clear();
       _loading = false;
     });
 
@@ -198,6 +213,12 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
       appBar: AppBar(
         title: const Text('Catat Transaksi'),
         backgroundColor: AppTheme.bg,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.qr_code_scanner_rounded),
+            onPressed: _scanBarcode,
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -207,8 +228,9 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
               context.read<ShiftProvider>().activeShift!.idWarung,
             ),
             builder: (context, snapshot) {
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                 return const SizedBox.shrink();
+              }
               return Container(
                 height: 60,
                 color: Colors.white,
@@ -223,25 +245,54 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
                     final p = ProdukModel.fromMap(
                       snapshot.data!.docs[i].data() as Map<String, dynamic>,
                     );
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ElevatedButton.icon(
-                        icon: const Icon(
-                          Icons.add_shopping_cart_rounded,
-                          size: 16,
-                        ),
-                        label: Text(p.namaProduk),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.surfaceDim,
-                          foregroundColor: AppTheme.textDark,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
+                    int qty = _qtyKeranjang[p.idProduk] ?? 0;
+
+                    if (qty > 0) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppTheme.primary),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.remove_circle_outline, color: AppTheme.primary),
+                                onPressed: () => _kurangKuantitas(p),
+                              ),
+                              Text('${p.namaProduk} (Rp${NumberFormat('#,###', 'id_ID').format(p.harga)}) x$qty', style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppTheme.primary)),
+                              IconButton(
+                                icon: const Icon(Icons.add_circle_outline, color: AppTheme.primary),
+                                onPressed: () => _tambahKuantitas(p),
+                              ),
+                            ],
                           ),
                         ),
-                        onPressed: () => _tambahKeKeranjang(p),
-                      ),
-                    );
+                      );
+                    } else {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ElevatedButton.icon(
+                          icon: const Icon(
+                            Icons.add_shopping_cart_rounded,
+                            size: 16,
+                          ),
+                          label: Text('${p.namaProduk} (Rp${NumberFormat('#,###', 'id_ID').format(p.harga)})'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.surfaceDim,
+                            foregroundColor: AppTheme.textDark,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () => _tambahKuantitas(p),
+                        ),
+                      );
+                    }
                   },
                 ),
               );
@@ -313,85 +364,7 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
                     const Divider(),
                     const SizedBox(height: 8),
 
-                    // --- KERANJANG (HYBRID) ---
-                    if (_keranjangCount.isNotEmpty)
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primarySoft.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              'Isi Keranjang:',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.primary,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              alignment: WrapAlignment.end,
-                              children: _keranjangCount.keys.map((id) {
-                                final p = _keranjangProduk[id]!;
-                                final qty = _keranjangCount[id]!;
-                                  return Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(color: Colors.grey.shade300),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        // Minus Button (Kiri)
-                                        InkWell(
-                                          onTap: () => _kurangiDariKeranjang(id),
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Container(
-                                            padding: const EdgeInsets.all(4),
-                                            decoration: BoxDecoration(
-                                              color: AppTheme.danger.withValues(alpha: 0.1),
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: const Icon(Icons.remove, size: 16, color: AppTheme.danger),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        
-                                        // Text Name (xQty)
-                                        Text("${p.namaProduk} (x$qty)", style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600)),
-                                        
-                                        const SizedBox(width: 8),
-                                        // Plus Button (Kanan)
-                                        InkWell(
-                                          onTap: () => _tambahKeKeranjang(p),
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Container(
-                                            padding: const EdgeInsets.all(4),
-                                            decoration: BoxDecoration(
-                                              color: AppTheme.primary.withValues(alpha: 0.1),
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: const Icon(Icons.add, size: 16, color: AppTheme.primary),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                              }).toList(),
-                            ),
-                          ],
-                        ),
-                      ),
+
 
                     // Input Utama (Responsive: TextField jika Desktop, Custom Text jika Mobile)
                     if (isDesktop)
@@ -482,15 +455,7 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
                                         color: AppTheme.textDark,
                                       ),
                                     ),
-                                    if (_keranjangCount.isNotEmpty &&
-                                        _totalManual > 0)
-                                      Text(
-                                        'Barang: Rp ${NumberFormat('#,###', 'id_ID').format(_totalKeranjang)} + Manual: Rp ${NumberFormat('#,###', 'id_ID').format(_totalManual)}',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 12,
-                                          color: AppTheme.textMuted,
-                                        ),
-                                      ),
+
                                   ],
                                 ),
                               ),
@@ -534,8 +499,9 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
                         textInputAction: TextInputAction.done,
                         onSubmitted: (_) {
                           FocusManager.instance.primaryFocus?.unfocus();
-                          if (_nominal.isNotEmpty)
+                          if (_nominal.isNotEmpty) {
                             _simpan(); // Bisa lgsg simpan bila pencet tombol Done/Enter di keyboard
+                          }
                         },
                       )
                     else
@@ -589,7 +555,7 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 10,
                   offset: const Offset(0, -4),
                 ),
@@ -666,7 +632,7 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
           child: InkWell(
             onTap: () => _pressKey(label),
             borderRadius: BorderRadius.circular(20),
-            highlightColor: Colors.black.withOpacity(0.05),
+            highlightColor: Colors.black.withValues(alpha: 0.05),
             child: Container(
               height: 58, // Lebih normal sizenya
               alignment: Alignment.center,
@@ -687,6 +653,33 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class ScannerOverlayWidget extends StatelessWidget {
+  const ScannerOverlayWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Scan Barcode'),
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+      ),
+      backgroundColor: Colors.black,
+      body: MobileScanner(
+        onDetect: (capture) {
+          final List<Barcode> barcodes = capture.barcodes;
+          if (barcodes.isNotEmpty) {
+            final String? code = barcodes.first.rawValue;
+            if (code != null) {
+              Navigator.pop(context, code);
+            }
+          }
+        },
       ),
     );
   }

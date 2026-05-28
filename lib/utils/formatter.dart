@@ -17,7 +17,7 @@ class Fmt {
   static String durasi(Duration d) {
     final j = d.inHours;
     final m = d.inMinutes % 60;
-    if (j == 0) return '${m} menit';
-    return '${j} jam ${m} menit';
+    if (j == 0) return '$m menit';
+    return '$j jam $m menit';
   }
 }
