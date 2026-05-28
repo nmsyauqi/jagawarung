@@ -54,7 +54,10 @@ class LoginPage extends StatelessWidget {
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppTheme.primary.withValues(alpha: 0.08), width: 1.5),
+                          border: Border.all(
+                            color: AppTheme.primary.withValues(alpha: 0.08),
+                            width: 1.5,
+                          ),
                         ),
                         child: Container(
                           width: 104,
@@ -68,13 +71,19 @@ class LoginPage extends StatelessWidget {
                             borderRadius: BorderRadius.circular(32),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF0F172A).withValues(alpha: 0.25),
+                                color: const Color(
+                                  0xFF0F172A,
+                                ).withValues(alpha: 0.25),
                                 blurRadius: 32,
                                 offset: const Offset(0, 16),
                               ),
                             ],
                           ),
-                          child: const Icon(Icons.storefront_rounded, size: 48, color: Colors.white),
+                          child: const Icon(
+                            Icons.storefront_rounded,
+                            size: 48,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 32),
@@ -83,12 +92,35 @@ class LoginPage extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('Jaga', style: GoogleFonts.plusJakartaSans(fontSize: 36, fontWeight: FontWeight.w800, color: AppTheme.textDark, letterSpacing: -1)),
-                          Text('Warung', style: GoogleFonts.plusJakartaSans(fontSize: 36, fontWeight: FontWeight.w800, color: AppTheme.primary, letterSpacing: -1)),
+                          Text(
+                            'Jaga',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 36,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.textDark,
+                              letterSpacing: -1,
+                            ),
+                          ),
+                          Text(
+                            'Warung',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 36,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.primary,
+                              letterSpacing: -1,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
-                      Text('Sistem Kasir & Manajemen Cerdas', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500, color: AppTheme.textMuted)),
+                      Text(
+                        'Sistem Kasir & Manajemen Cerdas',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: AppTheme.textMuted,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -106,22 +138,40 @@ class LoginPage extends StatelessWidget {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
-                            BoxShadow(color: AppTheme.primary.withValues(alpha: 0.25), blurRadius: 20, offset: const Offset(0, 8)),
+                            BoxShadow(
+                              color: AppTheme.primary.withValues(alpha: 0.25),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
                           ],
                         ),
                         child: ElevatedButton(
                           onPressed: () {
-                            Navigator.push(context, PageRouteBuilder(
-                              pageBuilder: (_, __, ___) => const MasukWarungPage(),
-                              transitionsBuilder: (_, anim, __, child) => FadeTransition(opacity: anim, child: child),
-                            ));
+                            Navigator.push(
+                              context,
+                              PageRouteBuilder(
+                                pageBuilder: (_, __, ___) =>
+                                    const MasukWarungPage(),
+                                transitionsBuilder: (_, anim, __, child) =>
+                                    FadeTransition(opacity: anim, child: child),
+                              ),
+                            );
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primary,
                             elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
                           ),
-                          child: Text('Login Sekarang', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+                          child: Text(
+                            'Login Sekarang',
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -131,20 +181,41 @@ class LoginPage extends StatelessWidget {
                         width: double.infinity,
                         height: 60,
                         child: TextButton(
-                          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DaftarWarungPage())),
-                          style: TextButton.styleFrom(
-                            backgroundColor: AppTheme.primary.withValues(alpha: 0.06),
-                            foregroundColor: AppTheme.primary,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const DaftarWarungPage(),
+                            ),
                           ),
-                          child: Text('Daftar Ruang Warung', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700)),
+                          style: TextButton.styleFrom(
+                            backgroundColor: AppTheme.primary.withValues(
+                              alpha: 0.06,
+                            ),
+                            foregroundColor: AppTheme.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Text(
+                            'Daftar Ruang Warung',
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 48),
-                Text('Versi 1.0.0', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.border)),
+                Text(
+                  'Versi 1.0.0',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: AppTheme.border,
+                  ),
+                ),
                 const SizedBox(height: 16),
               ],
             ),
@@ -199,21 +270,29 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
 
     if (sukses) {
       if (auth.isPegawai && auth.currentUser != null) {
-        await context.read<ShiftProvider>().muatShiftAktif(auth.currentUser!.idUser);
+        await context.read<ShiftProvider>().muatShiftAktif(
+          auth.currentUser!.idUser,
+        );
       }
       if (!mounted) return;
       setState(() => _isLoading = false);
-      Navigator.of(context).pop(); 
+      Navigator.of(context).pop();
     } else {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login gagal! Pastikan ID dan Sandi benar.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Login gagal! Pastikan ID dan Sandi benar.'),
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final darkBlue = const Color(0xFF0F172A);
-    final lightPurple = const Color(0xFFEFF1F9);
+    final lightPurple = const Color(
+      0xFFDDE4F2,
+    ); // Dibuat lebih gelap agar tidak terlihat cuma putih
     final amber = Colors.amber;
 
     return Scaffold(
@@ -227,7 +306,10 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
             child: Container(
               width: 300,
               height: 300,
-              decoration: BoxDecoration(color: lightPurple, shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: lightPurple,
+                shape: BoxShape.circle,
+              ),
             ),
           ),
           // Kiri bawah light purple shape
@@ -237,7 +319,10 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
             child: Container(
               width: 350,
               height: 350,
-              decoration: BoxDecoration(color: lightPurple, shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: lightPurple,
+                shape: BoxShape.circle,
+              ),
             ),
           ),
           // Kanan atas light purple shape
@@ -247,7 +332,10 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
             child: Container(
               width: 250,
               height: 250,
-              decoration: BoxDecoration(color: lightPurple, shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: lightPurple,
+                shape: BoxShape.circle,
+              ),
             ),
           ),
           // Dark blue circle top right
@@ -257,7 +345,10 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
             child: Container(
               width: 60,
               height: 60,
-              decoration: BoxDecoration(color: darkBlue, shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: darkBlue,
+                shape: BoxShape.circle,
+              ),
             ),
           ),
           // Yellow triangle top left
@@ -274,12 +365,25 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
             top: 20,
             left: MediaQuery.of(context).size.width / 2 - 20,
             child: Column(
-              children: List.generate(4, (i) => Row(
-                children: List.generate(5, (j) => Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: Container(width: 5, height: 5, decoration: BoxDecoration(color: darkBlue, shape: BoxShape.circle)),
-                )),
-              )),
+              children: List.generate(
+                4,
+                (i) => Row(
+                  children: List.generate(
+                    5,
+                    (j) => Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: Container(
+                        width: 5,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: darkBlue,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
           // Dots grid top right
@@ -287,12 +391,25 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
             top: 100,
             right: 20,
             child: Column(
-              children: List.generate(3, (i) => Row(
-                children: List.generate(3, (j) => Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: Container(width: 6, height: 6, decoration: BoxDecoration(color: amber, shape: BoxShape.circle)),
-                )),
-              )),
+              children: List.generate(
+                3,
+                (i) => Row(
+                  children: List.generate(
+                    3,
+                    (j) => Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: amber,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
 
@@ -301,12 +418,30 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
               children: [
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 24,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 100), // Spacing dari atas
-                        Text('Login', style: GoogleFonts.poppins(fontSize: 32, fontWeight: FontWeight.bold, color: darkBlue)),
+                        Text(
+                          'Selamat datang',
+                          style: GoogleFonts.poppins(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: darkBlue,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Silahkan masukan id/pin/kata sandi anda !',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                          ),
+                        ),
                         const SizedBox(height: 32),
 
                         // Input ID Warung
@@ -314,15 +449,27 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
-                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 5))],
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
                           ),
                           child: TextField(
                             controller: _idWarungCtrl,
                             style: GoogleFonts.poppins(fontSize: 14),
                             decoration: InputDecoration(
                               hintText: 'ID Warung (Username)',
-                              hintStyle: GoogleFonts.poppins(color: Colors.grey[400], fontSize: 13),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                              hintStyle: GoogleFonts.poppins(
+                                color: Colors.grey[400],
+                                fontSize: 13,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 18,
+                              ),
                               border: InputBorder.none,
                             ),
                           ),
@@ -334,22 +481,47 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
-                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 5))],
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
                           ),
                           child: TextField(
                             controller: _passCtrl,
                             obscureText: _obscureText,
-                            keyboardType: _isOwnerMode ? TextInputType.text : TextInputType.number,
-                            inputFormatters: _isOwnerMode ? [] : [FilteringTextInputFormatter.digitsOnly],
+                            keyboardType: _isOwnerMode
+                                ? TextInputType.text
+                                : TextInputType.number,
+                            inputFormatters: _isOwnerMode
+                                ? []
+                                : [FilteringTextInputFormatter.digitsOnly],
                             style: GoogleFonts.poppins(fontSize: 14),
                             decoration: InputDecoration(
-                              hintText: _isOwnerMode ? 'Kata Sandi Owner' : 'PIN Kasir (6-digit)',
-                              hintStyle: GoogleFonts.poppins(color: Colors.grey[400], fontSize: 13),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                              hintText: _isOwnerMode
+                                  ? 'Kata Sandi Owner'
+                                  : 'PIN Kasir (6-digit)',
+                              hintStyle: GoogleFonts.poppins(
+                                color: Colors.grey[400],
+                                fontSize: 13,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 18,
+                              ),
                               border: InputBorder.none,
                               suffixIcon: IconButton(
-                                icon: Icon(_obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: Colors.grey[400]),
-                                onPressed: () => setState(() => _obscureText = !_obscureText),
+                                icon: Icon(
+                                  _obscureText
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
+                                  color: Colors.grey[400],
+                                ),
+                                onPressed: () => setState(
+                                  () => _obscureText = !_obscureText,
+                                ),
                               ),
                             ),
                           ),
@@ -367,8 +539,14 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
                               });
                             },
                             child: Text(
-                              _isOwnerMode ? 'Masuk sebagai Kasir?' : 'Masuk sebagai Owner?',
-                              style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: darkBlue),
+                              _isOwnerMode
+                                  ? 'Masuk sebagai Kasir?'
+                                  : 'Masuk sebagai Owner?',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: darkBlue,
+                              ),
                             ),
                           ),
                         ),
@@ -382,15 +560,31 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
                             onPressed: _isLoading ? null : _prosesMasuk,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: darkBlue,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                               elevation: 0,
                             ),
                             child: _isLoading
-                                ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                : Text('Login', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(
+                                    'Login',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
                           ),
                         ),
-                        
+
                         const SizedBox(height: 40),
                       ],
                     ),
@@ -399,7 +593,13 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
                 // Footer Version
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
-                  child: Text('v1.0.0', style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey[400])),
+                  child: Text(
+                    'v1.0.0',
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      color: Colors.grey[400],
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -429,33 +629,41 @@ class _DaftarWarungPageState extends State<DaftarWarungPage> {
   bool _isLoading = false;
 
   void _daftar() async {
-    if (_namaWarungCtrl.text.isEmpty || _namaOwnerCtrl.text.isEmpty || _idCtrl.text.isEmpty || _passCtrl.text.isEmpty) return;
+    if (_namaWarungCtrl.text.isEmpty ||
+        _namaOwnerCtrl.text.isEmpty ||
+        _idCtrl.text.isEmpty ||
+        _passCtrl.text.isEmpty)
+      return;
 
     setState(() => _isLoading = true);
-    
+
     // Mesin buatan teman Backend dimasukkan di sini:
     bool sukses = await _dbService.registerWarungDanOwner(
-      _namaWarungCtrl.text, 
-      _namaOwnerCtrl.text, 
-      _idCtrl.text, 
+      _namaWarungCtrl.text,
+      _namaOwnerCtrl.text,
+      _idCtrl.text,
       _passCtrl.text,
-      _noHpCtrl.text // Opsional
+      _noHpCtrl.text, // Opsional
     );
 
     if (!mounted) return;
-    
+
     if (sukses) {
       // Langsung login setelah sukses registrasi ke Firebase
       final dummyEmail = "${_idCtrl.text}@jagawarung.com";
       await context.read<AuthProvider>().loginOwner(dummyEmail, _passCtrl.text);
       if (!mounted) return;
       setState(() => _isLoading = false);
-      
+
       // Karena Wrapper akan handle otomatis, kita tinggalkan layar ini menuju Dashboard asali
       Navigator.of(context).pop();
     } else {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal! Cek koneksi atau ID Warung sudah terpakai.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Gagal! Cek koneksi atau ID Warung sudah terpakai.'),
+        ),
+      );
     }
   }
 
@@ -494,59 +702,191 @@ class _DaftarWarungPageState extends State<DaftarWarungPage> {
 
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: AppTheme.accentSurface, borderRadius: BorderRadius.circular(16)),
+                decoration: BoxDecoration(
+                  color: AppTheme.accentSurface,
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: Row(
                   children: [
-                     const Icon(Icons.info_outline_rounded, color: AppTheme.accent),
-                     const SizedBox(width: 12),
-                     Expanded(child: Text('Daftarkan bisnis Anda. Kode Sandi ini akan menjadi kunci masuk master toko.', style: GoogleFonts.inter(fontSize: 12, color: AppTheme.accent))),
+                    const Icon(
+                      Icons.info_outline_rounded,
+                      color: AppTheme.accent,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Daftarkan bisnis Anda. Kode Sandi ini akan menjadi kunci masuk master toko.',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: AppTheme.accent,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(height: 32),
 
-              Text('Nama Warung / Toko', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
+              Text(
+                'Nama Warung / Toko',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textDark,
+                ),
+              ),
               const SizedBox(height: 8),
-              TextField(controller: _namaWarungCtrl, maxLength: 30, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(hintText: 'Warung Madura Jaya', prefixIcon: Icon(Icons.storefront_rounded, size: 20), fillColor: AppTheme.bg, filled: true, counterText: '')),
-              const SizedBox(height: 16),
-
-              Text('Nama Pemilik (Owner)', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
-              const SizedBox(height: 8),
-              TextField(controller: _namaOwnerCtrl, maxLength: 30, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(hintText: 'Budi Santoso', prefixIcon: Icon(Icons.person_rounded, size: 20), fillColor: AppTheme.bg, filled: true, counterText: '')),
-              const SizedBox(height: 16),
-
-              Text('ID Warung (Username Unik)', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
-              const SizedBox(height: 8),
-              TextField(controller: _idCtrl, maxLength: 20, inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))], decoration: const InputDecoration(hintText: 'warung_budi', prefixIcon: Icon(Icons.tag_rounded, size: 20), fillColor: AppTheme.bg, filled: true, counterText: '')),
-              const SizedBox(height: 16),
-
-              Text('Nomor HP (Opsional)', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
-              const SizedBox(height: 8),
-              TextField(controller: _noHpCtrl, keyboardType: TextInputType.phone, maxLength: 15, inputFormatters: [FilteringTextInputFormatter.digitsOnly], decoration: const InputDecoration(hintText: '081234567890', prefixIcon: Icon(Icons.phone_rounded, size: 20), fillColor: AppTheme.bg, filled: true, counterText: '')),
-              const SizedBox(height: 16),
-
-              Text('Kata Sandi', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
-              const SizedBox(height: 8),
-              TextField(controller: _passCtrl, obscureText: true, decoration: const InputDecoration(hintText: 'Minimal 6 karakter alfanumerik', prefixIcon: Icon(Icons.lock_outline_rounded, size: 20), fillColor: AppTheme.bg, filled: true, counterText: '')),
-              
-              const SizedBox(height: 40),
-              SizedBox(
-                width: double.infinity, height: 52,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _daftar,
-                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                  child: _isLoading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : Text('Daftar Sekarang', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+              TextField(
+                controller: _namaWarungCtrl,
+                maxLength: 30,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(
+                  hintText: 'Warung Madura Jaya',
+                  prefixIcon: Icon(Icons.storefront_rounded, size: 20),
+                  fillColor: AppTheme.bg,
+                  filled: true,
+                  counterText: '',
                 ),
               ),
               const SizedBox(height: 16),
-              
+
+              Text(
+                'Nama Pemilik (Owner)',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textDark,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _namaOwnerCtrl,
+                maxLength: 30,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(
+                  hintText: 'Budi Santoso',
+                  prefixIcon: Icon(Icons.person_rounded, size: 20),
+                  fillColor: AppTheme.bg,
+                  filled: true,
+                  counterText: '',
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              Text(
+                'ID Warung (Username Unik)',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textDark,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _idCtrl,
+                maxLength: 20,
+                inputFormatters: [
+                  FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                ],
+                decoration: const InputDecoration(
+                  hintText: 'warung_budi',
+                  prefixIcon: Icon(Icons.tag_rounded, size: 20),
+                  fillColor: AppTheme.bg,
+                  filled: true,
+                  counterText: '',
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              Text(
+                'Nomor HP (Opsional)',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textDark,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _noHpCtrl,
+                keyboardType: TextInputType.phone,
+                maxLength: 15,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: const InputDecoration(
+                  hintText: '081234567890',
+                  prefixIcon: Icon(Icons.phone_rounded, size: 20),
+                  fillColor: AppTheme.bg,
+                  filled: true,
+                  counterText: '',
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              Text(
+                'Kata Sandi',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textDark,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _passCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  hintText: 'Minimal 6 karakter alfanumerik',
+                  prefixIcon: Icon(Icons.lock_outline_rounded, size: 20),
+                  fillColor: AppTheme.bg,
+                  filled: true,
+                  counterText: '',
+                ),
+              ),
+
+              const SizedBox(height: 40),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _daftar,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          'Daftar Sekarang',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
               // Tombol Kembali ke Login pengganti AppBar Back Button
               Center(
                 child: TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: Text(
                     'Batal, Kembali ke Login',
-                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.textMuted),
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.textMuted,
+                    ),
                   ),
                 ),
               ),
