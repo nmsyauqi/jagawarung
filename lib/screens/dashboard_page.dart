@@ -38,6 +38,7 @@ class _DashboardPageState extends State<DashboardPage> {
     ).push(MaterialPageRoute(builder: (_) => const TutupShiftPage()));
   }
 
+  // ignore: unused_element
   Future<void> _openRealCameraScanner(String idWarung) async {
     // 1. Buka layar kamera asli buatan teman Anda
     final ProdukModel? scannedProduk = await Navigator.of(context).push<ProdukModel?>(
@@ -70,6 +71,7 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+  // ignore: unused_element
   void _showBarcodeScannerDialog(String idWarung) {
     showDialog(
       context: context,
@@ -92,7 +94,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppTheme.primary.withOpacity(0.1),
+                          color: AppTheme.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
@@ -206,7 +208,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             child: ListView.separated(
                               shrinkWrap: true,
                               itemCount: docs.length,
-                              separatorBuilder: (_, __) => const Divider(height: 1),
+                              separatorBuilder: (context, index) => const Divider(height: 1),
                               itemBuilder: (context, index) {
                                 final p = ProdukModel.fromMap(
                                   docs[index].data() as Map<String, dynamic>,
@@ -287,9 +289,9 @@ class _DashboardPageState extends State<DashboardPage> {
     if (s == null) return const Scaffold();
 
     final authProvider = context.watch<AuthProvider>();
-    final p_isPemilik = authProvider.isOwner;
+    final isPemilik = authProvider.isOwner;
     final user = authProvider.currentUser;
-    final p_nama = user?.nama ?? 'Kasir';
+    final nama = user?.nama ?? 'Kasir';
     final durasi = DateTime.now().difference(s.waktuMulai);
     final saldoSeharusnya = s.saldoAwal + targetProvider.totalUangMasuk;
     final listTx = targetProvider.listTransaksi;
@@ -323,7 +325,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    p_nama,
+                    nama,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -331,7 +333,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                   ),
                   Text(
-                    p_isPemilik ? 'Pemilik Toko' : 'Kasir',
+                    isPemilik ? 'Pemilik Toko' : 'Kasir',
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       color: AppTheme.textMuted,
@@ -344,7 +346,7 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         actions: [
           IconButton(
-            onPressed: () => _showKatalogDialog(s.idWarung, p_isPemilik),
+            onPressed: () => _showKatalogDialog(s.idWarung, isPemilik),
             icon: const Icon(
               Icons.inventory_2_outlined,
               color: AppTheme.textDark,
@@ -698,7 +700,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 style: OutlinedButton.styleFrom(
                   padding: EdgeInsets.zero,
                   side: BorderSide(
-                    color: AppTheme.danger.withOpacity(0.4),
+                    color: AppTheme.danger.withValues(alpha: 0.4),
                     width: 1.5,
                   ),
                   shape: RoundedRectangleBorder(
@@ -865,8 +867,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: StreamBuilder<QuerySnapshot>(
                   stream: _dbService.streamProduk(idWarung),
                   builder: (context, snapshot) {
-                    if (!snapshot.hasData)
+                    if (!snapshot.hasData) {
                       return const Center(child: CircularProgressIndicator());
+                    }
                     if (snapshot.data!.docs.isEmpty) {
                       return Center(
                         child: Text(
@@ -1059,7 +1062,7 @@ class _ScannerLaserState extends State<_ScannerLaser> with SingleTickerProviderS
               color: Colors.redAccent,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.redAccent.withOpacity(0.8),
+                  color: Colors.redAccent.withValues(alpha: 0.8),
                   blurRadius: 6,
                   spreadRadius: 1,
                 ),

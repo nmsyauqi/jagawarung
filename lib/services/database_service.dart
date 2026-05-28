@@ -53,7 +53,7 @@ class DatabaseService {
   }
 
   Future<void> updateShiftTotals(String idShift, int totalUangMasuk, int totalTransaksi) async {
-    try { await _db.collection('shifts').doc(idShift).update({'total_uang_masuk': totalUangMasuk, 'total_transaksi': totalTransaksi}); } catch (e) {}
+    try { await _db.collection('shifts').doc(idShift).update({'total_uang_masuk': totalUangMasuk, 'total_transaksi': totalTransaksi}); } catch (e) { /* ignore */ }
   }
 
   Stream<DocumentSnapshot> streamShiftDetail(String idShift) => streamSingleShift(idShift);
@@ -130,7 +130,7 @@ class DatabaseService {
   }
 
   Future<void> simpanShift(ShiftModel shift) async {
-    try { await _db.collection('shifts').doc(shift.idShift).set(shift.toMap()); } catch (e) {}
+    try { await _db.collection('shifts').doc(shift.idShift).set(shift.toMap()); } catch (e) { /* ignore */ }
   }
 
   Future<void> updateShiftSelesai(ShiftModel shift) async {
@@ -139,11 +139,11 @@ class DatabaseService {
         'waktu_selesai': shift.waktuSelesai?.toIso8601String(), 'saldo_akhir': shift.saldoAkhir,
         'total_uang_masuk': shift.totalUangMasuk, 'total_transaksi': shift.totalTransaksi,
       });
-    } catch (e) {}
+    } catch (e) { /* ignore */ }
   }
 
   Future<void> simpanTransaksi(TransaksiModel transaksi) async {
-    try { await _db.collection('transaksis').doc(transaksi.idTransaksi).set(transaksi.toMap()); } catch (e) {}
+    try { await _db.collection('transaksis').doc(transaksi.idTransaksi).set(transaksi.toMap()); } catch (e) { /* ignore */ }
   }
 
   Future<bool> hapusShiftDanTransaksi(String idShift) async {

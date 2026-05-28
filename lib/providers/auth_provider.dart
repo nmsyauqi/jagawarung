@@ -95,7 +95,7 @@ class AuthProvider with ChangeNotifier {
         idWarung: _currentUser!.idWarung,
         nama: namaBaru,
         role: _currentUser!.role,
-        pin: pinBaru ?? _currentUser!.pin,
+        pin: pinBaru,
         email: _currentUser!.email,
       );
       notifyListeners();

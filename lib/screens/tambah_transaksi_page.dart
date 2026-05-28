@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -37,8 +37,8 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
   bool _loading = false;
   bool _showNotes = false;
 
-  Map<String, int> _qtyKeranjang = {};
-  Map<String, ProdukModel> _detailKeranjang = {};
+  final Map<String, int> _qtyKeranjang = {};
+  final Map<String, ProdukModel> _detailKeranjang = {};
 
   // Riwayat transaksi khusus selama membuka halaman ini
   final List<TransaksiModel> _riwayatSesiIni = [];
@@ -53,8 +53,9 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
   void _pressKey(String val) {
     setState(() {
       if (val == 'del') {
-        if (_nominal.isNotEmpty)
+        if (_nominal.isNotEmpty) {
           _nominal = _nominal.substring(0, _nominal.length - 1);
+        }
       } else if (val == '000') {
         if (_nominal.isNotEmpty && _nominal.length <= 10) _nominal += '000';
       } else {
@@ -63,11 +64,7 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
     });
   }
 
-  String get _formattedNominal {
-    if (_nominal.isEmpty) return '0';
-    final n = int.tryParse(_nominal) ?? 0;
-    return NumberFormat('#,###', 'id_ID').format(n);
-  }
+
 
   int get _totalKeranjang {
     int total = 0;
@@ -119,6 +116,7 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
       MaterialPageRoute(builder: (context) => const ScannerOverlayWidget()),
     );
     if (barcode != null && barcode.isNotEmpty) {
+      if (!mounted) return;
       final p = await DatabaseService().cariProdukByBarcode(
         context.read<ShiftProvider>().activeShift!.idWarung, 
         barcode
@@ -138,6 +136,7 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
 
     setState(() => _loading = true);
     await Future.delayed(const Duration(milliseconds: 200));
+    if (!mounted) return;
 
     List<String> notes = [];
     _qtyKeranjang.forEach((id, qty) {
@@ -229,8 +228,9 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
               context.read<ShiftProvider>().activeShift!.idWarung,
             ),
             builder: (context, snapshot) {
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                 return const SizedBox.shrink();
+              }
               return Container(
                 height: 60,
                 color: Colors.white,
@@ -252,7 +252,7 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
                         padding: const EdgeInsets.only(right: 8),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: AppTheme.primary.withOpacity(0.1),
+                            color: AppTheme.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: AppTheme.primary),
                           ),
@@ -499,8 +499,9 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
                         textInputAction: TextInputAction.done,
                         onSubmitted: (_) {
                           FocusManager.instance.primaryFocus?.unfocus();
-                          if (_nominal.isNotEmpty)
+                          if (_nominal.isNotEmpty) {
                             _simpan(); // Bisa lgsg simpan bila pencet tombol Done/Enter di keyboard
+                          }
                         },
                       )
                     else
@@ -554,7 +555,7 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 10,
                   offset: const Offset(0, -4),
                 ),
@@ -631,7 +632,7 @@ class _TambahTransaksiPageState extends State<TambahTransaksiPage> {
           child: InkWell(
             onTap: () => _pressKey(label),
             borderRadius: BorderRadius.circular(20),
-            highlightColor: Colors.black.withOpacity(0.05),
+            highlightColor: Colors.black.withValues(alpha: 0.05),
             child: Container(
               height: 58, // Lebih normal sizenya
               alignment: Alignment.center,

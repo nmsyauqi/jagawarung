@@ -112,8 +112,8 @@ class LoginPage extends StatelessWidget {
                         child: ElevatedButton(
                           onPressed: () {
                             Navigator.push(context, PageRouteBuilder(
-                              pageBuilder: (_, __, ___) => const MasukWarungPage(),
-                              transitionsBuilder: (_, anim, __, child) => FadeTransition(opacity: anim, child: child),
+                              pageBuilder: (context, animation, secondaryAnimation) => const MasukWarungPage(),
+                              transitionsBuilder: (context, anim, secondaryAnimation, child) => FadeTransition(opacity: anim, child: child),
                             ));
                           },
                           style: ElevatedButton.styleFrom(
@@ -272,7 +272,7 @@ class _MasukWarungPageState extends State<MasukWarungPage> {
                     setState(() => _isLoading = true);
                     final auth = context.read<AuthProvider>();
                     bool sukses = await auth.loginOwnerGoogle();
-                    if (!mounted) return;
+                    if (!context.mounted) return;
                     if (sukses) {
                       setState(() => _isLoading = false);
                       Navigator.of(context).pop();

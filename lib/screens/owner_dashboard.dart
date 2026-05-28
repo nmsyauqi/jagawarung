@@ -15,7 +15,7 @@ import '../models/produk_model.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import 'dart:typed_data';
+
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 
@@ -131,8 +131,9 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     return StreamBuilder<QuerySnapshot>(
       stream: _dbService.streamTransaksiHariIni(idWarung),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting)
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
+        }
 
         int totalHariIni = 0;
         List<TransaksiModel> transaksis = [];
@@ -354,8 +355,9 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         StreamBuilder<QuerySnapshot>(
           stream: _dbService.streamProduk(idWarung),
           builder: (context, snapshot) {
-            if (!snapshot.hasData)
+            if (!snapshot.hasData) {
               return const Center(child: CircularProgressIndicator());
+            }
             if (snapshot.data!.docs.isEmpty) {
               return Center(
                 child: Padding(
@@ -600,8 +602,9 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     return StreamBuilder<QuerySnapshot>(
       stream: _dbService.streamRekapShift(idWarung),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting)
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
+        }
 
         return ListView(
           padding: const EdgeInsets.all(24),
@@ -1049,7 +1052,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                         ),
                         onPressed: () async {
                           bool sukses = await _dbService.tutupPaksaShift(shift);
-                          if (sukses && context.mounted) {
+                          if (sukses && mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
@@ -1098,8 +1101,9 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     return StreamBuilder<QuerySnapshot>(
       stream: _dbService.streamPegawai(idWarung),
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
+        }
         return ListView(
           padding: const EdgeInsets.all(24),
           children: [
@@ -1355,7 +1359,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) {
+        builder: (modalContext, setModalState) {
           return AlertDialog(
             title: const Text('Koreksi Pendapatan'),
             content: Column(
@@ -1375,7 +1379,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                   controller: inputCtrl,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    hintText: 'Cth: ${saldoSistem}',
+                    hintText: 'Cth: $saldoSistem',
                     hintStyle: TextStyle(color: Colors.grey.shade400),
                     labelText: 'Total Uang Fisik',
                     labelStyle: TextStyle(color: Colors.grey.shade500),
@@ -1401,6 +1405,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                             0;
                         int selisih = uangFisik - saldoSistem;
 
+                        final messenger = ScaffoldMessenger.of(context);
                         setModalState(() => loading = true);
                         bool sukses = await _dbService.koreksiKasirBermasalah(
                           shift.idShift,
@@ -1408,20 +1413,20 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                           selisih,
                         );
 
-                        if (sukses && mounted) {
-                          Navigator.pop(ctx);
-                          ScaffoldMessenger.of(context).showSnackBar(
+                        if (!mounted) return;
+                        if (sukses) {
+                          if (ctx.mounted) Navigator.pop(ctx);
+                          messenger.showSnackBar(
                             const SnackBar(
                               content: Text('Shift berhasil dikoreksi'),
                             ),
                           );
                         } else {
                           setModalState(() => loading = false);
-                          if (mounted)
-                            ScaffoldMessenger.of(context).showSnackBar(
+                          messenger.showSnackBar(
                               const SnackBar(content: Text('Gagal mengoreksi')),
                             );
-                        }
+                          }
                       },
                 child: loading
                     ? const SizedBox(
@@ -1472,7 +1477,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) {
+        builder: (modalContext, setModalState) {
           return AlertDialog(
             title: const Text('Pecat / Hapus Pegawai'),
             content: Text(
@@ -1490,24 +1495,25 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                 onPressed: loading
                     ? null
                     : () async {
+                        final messenger = ScaffoldMessenger.of(context);
                         setModalState(() => loading = true);
                         bool sukses = await _dbService.hapusPegawai(
                           user.idUser,
                         );
-                        if (sukses && mounted) {
-                          Navigator.pop(ctx);
-                          ScaffoldMessenger.of(context).showSnackBar(
+                        if (!mounted) return;
+                        if (sukses) {
+                          if (ctx.mounted) Navigator.pop(ctx);
+                          messenger.showSnackBar(
                             const SnackBar(
                               content: Text('Akses Pegawai dikunci & dihapus'),
                             ),
                           );
                         } else {
                           setModalState(() => loading = false);
-                          if (mounted)
-                            ScaffoldMessenger.of(context).showSnackBar(
+                          messenger.showSnackBar(
                               const SnackBar(content: Text('Gagal menghapus')),
                             );
-                        }
+                          }
                       },
                 child: loading
                     ? const SizedBox(
@@ -1576,9 +1582,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
               String hasil = await _dbService.tambahPegawai(pegawaiBaru);
               if (ctx.mounted) {
                 Navigator.pop(ctx);
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(hasil)));
+                ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(hasil)));
               }
             },
             child: const Text('Simpan'),
@@ -1596,7 +1600,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) {
+        builder: (modalContext, setModalState) {
           return AlertDialog(
             title: const Text('Ubah Identitas'),
             content: SingleChildScrollView(
@@ -1631,7 +1635,9 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                     ? null
                     : () async {
                         if (namaWarungCtrl.text.isEmpty ||
-                            namaOwnerCtrl.text.isEmpty) return;
+                            namaOwnerCtrl.text.isEmpty) { return; }
+                        final messenger = ScaffoldMessenger.of(context);
+                        final auth = context.read<AuthProvider>();
                         setModalState(() => loading = true);
 
                         bool sukses = await _dbService.updateProfilToko(
@@ -1641,27 +1647,27 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                           namaOwnerCtrl.text,
                         );
 
-                        if (sukses && mounted) {
-                          context.read<AuthProvider>().perbaruiProfilLokal(
+                        if (!mounted) return;
+                        if (sukses) {
+                          auth.perbaruiProfilLokal(
                             namaOwnerCtrl.text,
                             owner.pin ?? '',
                           );
                           setState(() {});
-                          Navigator.pop(ctx);
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          if (ctx.mounted) Navigator.pop(ctx);
+                          messenger.showSnackBar(
                             const SnackBar(
                               content: Text('Profil berhasil diperbarui.'),
                             ),
                           );
                         } else {
                           setModalState(() => loading = false);
-                          if (mounted)
-                            ScaffoldMessenger.of(context).showSnackBar(
+                          messenger.showSnackBar(
                               const SnackBar(
                                 content: Text('Gagal memperbarui profil'),
                               ),
                             );
-                        }
+                          }
                       },
                 child: loading
                     ? const SizedBox(
@@ -1827,6 +1833,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                   if (await canLaunchUrl(url)) {
                     await launchUrl(url, mode: LaunchMode.externalApplication);
                   } else {
+                    if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Gagal menembak aplikasi browser/WA'),

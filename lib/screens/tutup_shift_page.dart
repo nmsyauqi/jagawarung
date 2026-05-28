@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../utils/app_theme.dart';
 import '../utils/formatter.dart';
 import 'package:provider/provider.dart';
 import '../providers/shift_provider.dart';
-import '../models/shift_model.dart';
+
 
 /// Halaman tutup shift — pegawai menghitung saldo akhir kasir.
 class TutupShiftPage extends StatefulWidget {
@@ -55,11 +55,10 @@ class _TutupShiftPageState extends State<TutupShiftPage> {
     setState(() => _loading = true);
     await Future.delayed(const Duration(milliseconds: 700));
 
+    if (!mounted) return;
     // Panggil Backend Logic
     context.read<ShiftProvider>().tutupShift(nominal);
 
-    if (!mounted) return;
-    
     // Kembali ke akar rute, WrapperScreen di main.dart otomatis memindahkan ke halaman Buka Shift
     Navigator.of(context).pop();
   }

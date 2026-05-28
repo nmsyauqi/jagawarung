@@ -30,7 +30,7 @@ jobs:
 
       - name: Build Web App
         # PENTING: Ganti "jagawarung" sesuai dengan nama repository GitHub Anda jika berbeda.
-        run: flutter build web --release --base-href "/jagawarung/"
+        run: flutter build web --release --base-href "/pos-jagawarung-muhammad-syauqi-nadzif-250458302034/"
 
       - name: Handle GitHub Pages 404 Routing
         run: cp build/web/index.html build/web/404.html
